@@ -38,3 +38,4 @@ build/
 .DS_Store
 /.bsp/
 /.idea/scala_compiler.xml
+/.idea/workspace.xml
