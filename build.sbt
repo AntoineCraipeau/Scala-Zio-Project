@@ -1,4 +1,5 @@
 val zioVersion = "2.0.20"
+val zioHttpVersion = "3.0.0-RC3"
 
 val scala3Version = "3.3.1"
 
@@ -12,7 +13,8 @@ lazy val root = project
     name := "Scala-Zio-Project",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % zioVersion,
-      "dev.zio" %% "zio-streams" % zioVersion
+      "dev.zio" %% "zio-streams" % zioVersion,
+      "dev.zio" %% "zio-http" % zioHttpVersion,
     ),
     libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test
   )

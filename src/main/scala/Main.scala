@@ -1,5 +1,7 @@
 import zio._
 import zio.stream._
+import zio.http._
+import zio.Console._
 
 object App extends ZIOAppDefault {
 
