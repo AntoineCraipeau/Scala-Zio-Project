@@ -1,7 +1,25 @@
 import zio._
 import zio.stream._
-import zio.Console._
 import com.github.tototoshi.csv._
+
+import GasStation._
+import GeographicData._
+import ServiceData._
+
+import GasType._
+import ExtraServices._
+import Region._
+import Department._
+
+import GasStationId._
+import Population._
+import Address._
+import City._
+import Coordinates._
+import Latitude._
+import Longitude._
+import GasPrice._
+
 
 def loadGasStationCsv(source: CSVReader): ZStream[Any, Any, GasStation]= {
   ZStream
