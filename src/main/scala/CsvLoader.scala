@@ -21,12 +21,14 @@ def loadGasStationCsv():ZIO[Any & ZIOAppArgs & Scope, Throwable, Unit] = {
           population = parsePop(line(4)),
           address = line(5),
           city = line(6),
-          schedule = Some(line(7)),
+          schedule = Some("Thinking about it"),
           service = parseServices(line(26)),
           automate24 = parseBool(line(25)),
           region = Location.apply(line(30), line(29)),
           department = Location.apply(line(28), line(27)),
           gasList = parseGas(line(12), line(14), line(16), line(18), line(20), line(22)),
+          latitude = line(1).toDouble,
+          longitude = line(2).toDouble,
         ))
       }
       .collectSome[GasStation]
