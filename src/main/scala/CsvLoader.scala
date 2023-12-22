@@ -9,18 +9,20 @@ def loadGasStationCsv(source: CSVReader): ZStream[Any, Any, GasStation]= {
     .map[Option[GasStation]] {
       case line if line.head == "id" => None
       case line => Some(GasStation(
-        id = line.head.toInt,
-        population = parsePop(line(4)),
-        address = line(5),
-        city = line(6),
-        schedule = Some("Thinking about it"),
-        service = parseServices(line(26)),
-        automate24 = parseBool(line(25)),
-        region = Location(line(30), line(29)),
-        department = Location(line(28), line(27)),
-        gasList = parseGas(line(12), line(14), line(16), line(18), line(20), line(22)),
-        latitude = line(1).toDouble,
-        longitude = line(2).toDouble,
+        id = GasStationId.apply(line.head.toInt),
+        geographicData = GeographicData(
+          population = parsePop(line(4)),
+          address = Address.apply(line(5)),
+          city = City.apply(line(6)),
+          region = parseRegionCode(line(30)),
+          department = parseDepartmentCode(line(28)),
+          coordinates = Coordinates(Latitude.apply(line(1).toDouble), Longitude.apply(line(2).toDouble)),
+        ),
+        serviceData = ServiceData(
+          gasList = parseGas(line(12), line(14), line(16), line(18), line(20), line(22)),
+          extraService = parseServices(line(26)),
+          automate24 = parseBool(line(25)),
+        ),
       ))
     }
     .collectSome[GasStation]
@@ -33,38 +35,38 @@ def parsePop(s: String): Population =
     case _ => throw new Exception("Invalid population")
   }
 
-def parseServices(s: String): List[Services] =
+def parseServices(s: String): List[ExtraServices] =
   s.replace("Butane,","Butane &").split(",").filter(s => s != "").map(parseOneService).toList
 
-def parseOneService(s: String): Services =
+def parseOneService(s: String): ExtraServices =
   s match {
-    case "Toilettes publiques" => Services.PublicToilets
-    case "Laverie" => Services.Laundry
-    case "Relais colis" => Services.ParcelRelay
-    case "Boutique alimentaire" => Services.FoodShop
-    case "Boutique non alimentaire" => Services.NonFoodShop
-    case "Restauration à emporter" => Services.TakeAwayFood
-    case "Restauration sur place" => Services.SitInRestaurant
-    case "Bar" => Services.Bar
-    case "Vente de pétrole lampant" => Services.LampOilSales
-    case "Station de gonflage" => Services.InflationStation
-    case "Carburant additivé" => Services.AdditiveFuel
-    case "Location de véhicule" => Services.VehicleRental
-    case "Piste poids lourds" => Services.HeavyVehicleLane
-    case "Lavage automatique" => Services.AutomaticCarWash
-    case "Lavage manuel" => Services.ManualCarWash
-    case "Vente de gaz domestique (Butane & Propane)" => Services.DomesticGasSales
-    case "Vente de fioul domestique" => Services.DomesticFuelSales
-    case "Wifi" => Services.Wifi
-    case "Automate CB 24/24" => Services.ATM24_7CashMachine
-    case "DAB (Distributeur automatique de billets)" => Services.CashDispenser
-    case "Espace bébé" => Services.BabyArea
-    case "Bornes électriques" => Services.ElectricalTerminals
-    case "Services réparation / entretien" => Services.RepairMaintenanceServices
-    case "Douches" => Services.Showers
-    case "Vente d'additifs carburants" => Services.FuelAdditivesSales
-    case "GNV" => Services.GNV
-    case "Aire de camping-cars" => Services.CampingCarArea
+    case "Toilettes publiques" => ExtraServices.PublicToilets
+    case "Laverie" => ExtraServices.Laundry
+    case "Relais colis" => ExtraServices.ParcelRelay
+    case "Boutique alimentaire" => ExtraServices.FoodShop
+    case "Boutique non alimentaire" => ExtraServices.NonFoodShop
+    case "Restauration à emporter" => ExtraServices.TakeAwayFood
+    case "Restauration sur place" => ExtraServices.SitInRestaurant
+    case "Bar" => ExtraServices.Bar
+    case "Vente de pétrole lampant" => ExtraServices.LampOilSales
+    case "Station de gonflage" => ExtraServices.InflationStation
+    case "Carburant additivé" => ExtraServices.AdditiveFuel
+    case "Location de véhicule" => ExtraServices.VehicleRental
+    case "Piste poids lourds" => ExtraServices.HeavyVehicleLane
+    case "Lavage automatique" => ExtraServices.AutomaticCarWash
+    case "Lavage manuel" => ExtraServices.ManualCarWash
+    case "Vente de gaz domestique (Butane & Propane)" => ExtraServices.DomesticGasSales
+    case "Vente de fioul domestique" => ExtraServices.DomesticFuelSales
+    case "Wifi" => ExtraServices.Wifi
+    case "Automate CB 24/24" => ExtraServices.ATM24_7CashMachine
+    case "DAB (Distributeur automatique de billets)" => ExtraServices.CashDispenser
+    case "Espace bébé" => ExtraServices.BabyArea
+    case "Bornes électriques" => ExtraServices.ElectricalTerminals
+    case "Services réparation / entretien" => ExtraServices.RepairMaintenanceServices
+    case "Douches" => ExtraServices.Showers
+    case "Vente d'additifs carburants" => ExtraServices.FuelAdditivesSales
+    case "GNV" => ExtraServices.GNV
+    case "Aire de camping-cars" => ExtraServices.CampingCarArea
     case _ => throw new Exception(s"Invalid service: $s")
   }
 
@@ -75,13 +77,133 @@ def parseBool(s: String): Boolean =
     case _ => throw new Exception("Invalid boolean")
   }
 
-def parseGas(gazole: String, sp95: String, e85: String, gpl: String, e10: String, sp98: String): List[Gas] =
-  List[Gas](
-    //If the field is empty, we set price to 0
-    Gas(GasType.Gazol, !gazole.equals(""), if !gazole.equals("") then gazole.toDouble else 0),
-    Gas(GasType.SP95, !sp95.equals(""), if !sp95.equals("") then sp95.toDouble else 0),
-    Gas(GasType.E85, !e85.equals(""), if !e85.equals("") then e85.toDouble else 0),
-    Gas(GasType.GPLc, !gpl.equals(""), if !gpl.equals("") then gpl.toDouble else 0),
-    Gas(GasType.E10, !e10.equals(""), if !e10.equals("") then e10.toDouble else 0),
-    Gas(GasType.SP98, !sp98.equals(""), if !sp98.equals("") then sp98.toDouble else 0),
+def parseRegionCode(s: String): Region =
+  s match{
+    case "84" => Region.AuvergneRhoneAlpes
+    case "27" => Region.BourgogneFrancheComte
+    case "53" => Region.Bretagne
+    case "24" => Region.CentreValdeLoire
+    case "94" => Region.Corse
+    case "44" => Region.GrandEst
+    case "32" => Region.HautsdeFrance
+    case "11" => Region.IledeFrance
+    case "28" => Region.Normandie
+    case "75" => Region.NouvelleAquitaine
+    case "76" => Region.Occitanie
+    case "52" => Region.PaysdelaLoire
+    case "93" => Region.ProvenceAlpesCotedAzur
+    case _ => null
+  }
+
+def parseDepartmentCode(s: String): Department =
+  s match {
+    case "01" => Department.Ain
+    case "02" => Department.Aisne
+    case "03" => Department.Allier
+    case "04" => Department.AlpesdeHauteProvence
+    case "05" => Department.HautesAlpes
+    case "06" => Department.AlpesMaritimes
+    case "07" => Department.Ardeche
+    case "08" => Department.Ardennes
+    case "09" => Department.Ariege
+    case "10" => Department.Aube
+    case "11" => Department.Aude
+    case "12" => Department.Aveyron
+    case "13" => Department.BouchesduRhone
+    case "14" => Department.Calvados
+    case "15" => Department.Cantal
+    case "16" => Department.Charente
+    case "17" => Department.CharenteMaritime
+    case "18" => Department.Cher
+    case "19" => Department.Correze
+    case "2A" => Department.CorseDuSud
+    case "2B" => Department.HauteCorse
+    case "21" => Department.CotedOr
+    case "22" => Department.CotesdArmor
+    case "23" => Department.Creuse
+    case "24" => Department.Dordogne
+    case "25" => Department.Doubs
+    case "26" => Department.Drome
+    case "27" => Department.Eure
+    case "28" => Department.EureetLoir
+    case "29" => Department.Finistere
+    case "30" => Department.Gard
+    case "31" => Department.HauteGaronne
+    case "32" => Department.Gers
+    case "33" => Department.Gironde
+    case "34" => Department.Herault
+    case "35" => Department.IlleetVilaine
+    case "36" => Department.Indre
+    case "37" => Department.IndreetLoire
+    case "38" => Department.Isere
+    case "39" => Department.Jura
+    case "40" => Department.Landes
+    case "41" => Department.LoiretCher
+    case "42" => Department.Loire
+    case "43" => Department.HauteLoire
+    case "44" => Department.LoireAtlantique
+    case "45" => Department.Loiret
+    case "46" => Department.Lot
+    case "47" => Department.LotetGaronne
+    case "48" => Department.Lozere
+    case "49" => Department.MaineetLoire
+    case "50" => Department.Manche
+    case "51" => Department.Marne
+    case "52" => Department.HauteMarne
+    case "53" => Department.Mayenne
+    case "54" => Department.MeurtheetMoselle
+    case "55" => Department.Meuse
+    case "56" => Department.Morbihan
+    case "57" => Department.Moselle
+    case "58" => Department.Nievre
+    case "59" => Department.Nord
+    case "60" => Department.Oise
+    case "61" => Department.Orne
+    case "62" => Department.PasdeCalais
+    case "63" => Department.PuydeDome
+    case "64" => Department.PyreneesAtlantiques
+    case "65" => Department.HautesPyrenees
+    case "66" => Department.PyreneesOrientales
+    case "67" => Department.BasRhin
+    case "68" => Department.HautRhin
+    case "69" => Department.Rhone
+    case "70" => Department.HauteSaone
+    case "71" => Department.SaoneetLoire
+    case "72" => Department.Sarthe
+    case "73" => Department.Savoie
+    case "74" => Department.HauteSavoie
+    case "75" => Department.Paris
+    case "76" => Department.SeineMaritime
+    case "77" => Department.SeineetMarne
+    case "78" => Department.Yvelines
+    case "79" => Department.DeuxSevres
+    case "80" => Department.Somme
+    case "81" => Department.Tarn
+    case "82" => Department.TarnetGaronne
+    case "83" => Department.Var
+    case "84" => Department.Vaucluse
+    case "85" => Department.Vendee
+    case "86" => Department.Vienne
+    case "87" => Department.HauteVienne
+    case "88" => Department.Vosges
+    case "89" => Department.Yonne
+    case "90" => Department.TerritoiredeBelfort
+    case "91" => Department.Essonne
+    case "92" => Department.HautsdeSeine
+    case "93" => Department.SeineSaintDenis
+    case "94" => Department.ValdeMarne
+    case "95" => Department.ValdOise
+    case _ => null
+  }
+
+def parseGas(gazole: String, sp95: String, e85: String, gpl: String, e10: String, sp98: String): Map[GasType,GasPrice] = {
+  val gasMap = Map[GasType,String](
+    GasType.Gazol -> gazole,
+    GasType.SP95 -> sp95,
+    GasType.E85 -> e85,
+    GasType.GPLc -> gpl,
+    GasType.E10 -> e10,
+    GasType.SP98 -> sp98,
   )
+  gasMap.filter((_,v) => v != "").map((k,v) => (k,GasPrice(v.toDouble)))
+}
