@@ -1,7 +1,7 @@
 case class GasStation(
                        id: Int,
                        population: Population,
-                       address: Location,
+                       address: String,
                        city: String,
                        schedule: Option[String],
                        service: List[Services],
@@ -12,7 +12,7 @@ case class GasStation(
                      )
 
 case class Location(
-                     code: Int,
+                     code: String,
                      name: String
                    )
 
