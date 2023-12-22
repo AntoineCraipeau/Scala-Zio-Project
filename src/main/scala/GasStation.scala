@@ -8,7 +8,9 @@ case class GasStation(
                        automate24: Boolean,
                        region: Location,
                        department: Location,
-                       gasList: List[Gas]
+                       gasList: List[Gas],
+                       latitude : Double,
+                       longitude : Double
                      )
 
 case class Location(
