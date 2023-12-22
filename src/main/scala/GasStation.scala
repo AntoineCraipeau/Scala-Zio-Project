@@ -28,7 +28,7 @@ case class Gas(
               )
 
 enum Services:
-  case PublicToilets, Laundry, ParcelRelay, FoodShop, NonFoodShop, TakeAwayFood, SitInRestaurant, Bar, LampOilSales, InflationStation, AdditiveFuel, VehicleRental, HeavyVehicleLane, AutomaticCarWash, ManualCarWash, DomesticGasSales, Wifi, ATM24_7CashMachine, CashDispenser
+  case PublicToilets, Laundry, ParcelRelay, FoodShop, NonFoodShop, TakeAwayFood, SitInRestaurant, Bar, LampOilSales, InflationStation, AdditiveFuel, VehicleRental, HeavyVehicleLane, AutomaticCarWash, ManualCarWash, DomesticGasSales, DomesticFuelSales, Wifi, ATM24_7CashMachine, CashDispenser, BabyArea, ElectricalTerminals, RepairMaintenanceServices, Showers, FuelAdditivesSales, GNV, CampingCarArea
 
 enum Population:
   case Route, Autoroute
