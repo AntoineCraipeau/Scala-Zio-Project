@@ -9,8 +9,8 @@ case class GasStation(
                        region: Location,
                        department: Location,
                        gasList: List[Gas],
-                       latitude : Long,
-                       longitude : Long
+                       latitude : Double,
+                       longitude : Double
                      )
 
 case class Location(
