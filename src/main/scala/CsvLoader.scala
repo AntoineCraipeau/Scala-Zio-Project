@@ -44,7 +44,39 @@ def parsePop(s: String): Population =
   }
 
 def parseServices(s: String): List[Services] =
-  List[Services]()
+  s.replace("Butane,","Butane &").split(",").filter(s => s != "").map(parseOneService).toList
+
+def parseOneService(s: String): Services =
+  s match {
+    case "Toilettes publiques" => Services.PublicToilets
+    case "Laverie" => Services.Laundry
+    case "Relais colis" => Services.ParcelRelay
+    case "Boutique alimentaire" => Services.FoodShop
+    case "Boutique non alimentaire" => Services.NonFoodShop
+    case "Restauration à emporter" => Services.TakeAwayFood
+    case "Restauration sur place" => Services.SitInRestaurant
+    case "Bar" => Services.Bar
+    case "Vente de pétrole lampant" => Services.LampOilSales
+    case "Station de gonflage" => Services.InflationStation
+    case "Carburant additivé" => Services.AdditiveFuel
+    case "Location de véhicule" => Services.VehicleRental
+    case "Piste poids lourds" => Services.HeavyVehicleLane
+    case "Lavage automatique" => Services.AutomaticCarWash
+    case "Lavage manuel" => Services.ManualCarWash
+    case "Vente de gaz domestique (Butane & Propane)" => Services.DomesticGasSales
+    case "Vente de fioul domestique" => Services.DomesticFuelSales
+    case "Wifi" => Services.Wifi
+    case "Automate CB 24/24" => Services.ATM24_7CashMachine
+    case "DAB (Distributeur automatique de billets)" => Services.CashDispenser
+    case "Espace bébé" => Services.BabyArea
+    case "Bornes électriques" => Services.ElectricalTerminals
+    case "Services réparation / entretien" => Services.RepairMaintenanceServices
+    case "Douches" => Services.Showers
+    case "Vente d'additifs carburants" => Services.FuelAdditivesSales
+    case "GNV" => Services.GNV
+    case "Aire de camping-cars" => Services.CampingCarArea
+    case _ => throw new Exception(s"Invalid service: $s")
+  }
 
 def parseBool(s: String): Boolean =
   s match {
