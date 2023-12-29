@@ -20,7 +20,10 @@ import GasPrice.*
 import scala.util.Try
 
 
-def loadGasStationCsv(source: CSVReader): ZStream[Any, Any, GasStation]= {
+def loadGasStationCsv(): ZStream[Any, Any, GasStation]= {
+  val url = App.getClass.getClassLoader.getResource("stations.csv")
+  val source = CSVReader.open(url.getPath)
+
   ZStream
     .fromIterator[Seq[String]](source.iterator)
     .map[Option[GasStation]] {
