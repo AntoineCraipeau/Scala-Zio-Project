@@ -1,24 +1,23 @@
-import zio._
-import zio.stream._
-import com.github.tototoshi.csv._
+import zio.*
+import zio.stream.*
+import com.github.tototoshi.csv.*
+import GasStation.*
+import GeographicData.*
+import ServiceData.*
+import GasType.*
+import ExtraServices.*
+import Region.*
+import Department.*
+import GasStationId.*
+import Population.*
+import Address.*
+import City.*
+import Coordinates.*
+import Latitude.*
+import Longitude.*
+import GasPrice.*
 
-import GasStation._
-import GeographicData._
-import ServiceData._
-
-import GasType._
-import ExtraServices._
-import Region._
-import Department._
-
-import GasStationId._
-import Population._
-import Address._
-import City._
-import Coordinates._
-import Latitude._
-import Longitude._
-import GasPrice._
+import scala.util.Try
 
 
 def loadGasStationCsv(source: CSVReader): ZStream[Any, Any, GasStation]= {
@@ -26,22 +25,50 @@ def loadGasStationCsv(source: CSVReader): ZStream[Any, Any, GasStation]= {
     .fromIterator[Seq[String]](source.iterator)
     .map[Option[GasStation]] {
       case line if line.head == "id" => None
-      case line => Some(GasStation(
-        id = GasStationId.apply(line.head.toInt),
-        geographicData = GeographicData(
-          population = parsePop(line(4)),
-          address = Address.apply(line(5)),
-          city = City.apply(line(6)),
-          region = parseRegionCode(line(30)),
-          department = parseDepartmentCode(line(28)),
-          coordinates = Coordinates(Latitude.apply(line(1).toDouble), Longitude.apply(line(2).toDouble)),
-        ),
-        serviceData = ServiceData(
-          gasList = parseGas(line(12), line(14), line(16), line(18), line(20), line(22)),
-          extraService = parseServices(line(26)),
-          automate24 = parseBool(line(25)),
-        ),
-      ))
+      case lId :: lLatitude :: lLongitude :: _ :: lPop :: lAddress :: lCity :: _ :: _ :: _ :: _ :: _ :: lGazolePrice :: _ :: lSp95Price :: _ :: lE85Price :: _ :: lGplPrice :: _ :: lE10Price :: _ :: lSp98Price :: _ :: _ :: lAutomate24 :: lServices :: _ :: lDepartmentCode :: _ :: lRegionCode =>
+
+        val gasStationId = toIntOption(lId)
+        val latitude = toDoubleOption(lLatitude)
+        val longitude = toDoubleOption(lLongitude)
+        val department = Try(parseDepartmentCode(lDepartmentCode)).toOption
+        val region = Try(parseRegionCode(lRegionCode.head)).toOption
+        val services = Try(parseServices(lServices)).toOption
+        val population = Try(parsePop(lPop)).toOption
+        val gasList = Try(parseGas(lGazolePrice, lSp95Price, lE85Price, lGplPrice, lE10Price, lSp98Price)).toOption
+        val address = Address.safe(lAddress)
+        val city = City.safe(lCity)
+        val automate24 = Try(parseBool(lAutomate24)).toOption
+
+        for {
+          lid <- gasStationId
+          lat <- latitude
+          lon <- longitude
+          dpt <- department
+          reg <- region
+          srv <- services
+          pop <- population
+          addr <- address
+          city <- city
+          gas <- gasList
+          a24 <- automate24
+
+        } yield GasStation(
+          id = GasStationId.apply(lid),
+          geographicData = GeographicData(
+            population = pop,
+            address = addr,
+            city = city,
+            region = reg,
+            department = dpt,
+            coordinates = Coordinates(Latitude.apply(lat), Longitude.apply(lon)),
+          ),
+          serviceData = ServiceData(
+            gasList = gas,
+            extraService = srv,
+            automate24 = a24,
+          ),
+        )
+      case _ => None
     }
     .collectSome[GasStation]
 }
@@ -110,7 +137,7 @@ def parseRegionCode(s: String): Region =
     case "76" => Region.Occitanie
     case "52" => Region.PaysdelaLoire
     case "93" => Region.ProvenceAlpesCotedAzur
-    case _ => null
+    case _ => throw new Exception(s"Invalid region: $s")
   }
 
 def parseDepartmentCode(s: String): Department =
@@ -211,7 +238,7 @@ def parseDepartmentCode(s: String): Department =
     case "93" => Department.SeineSaintDenis
     case "94" => Department.ValdeMarne
     case "95" => Department.ValdOise
-    case _ => null
+    case _ => throw new Exception(s"Invalid department: $s")
   }
 
 def parseGas(gazole: String, sp95: String, e85: String, gpl: String, e10: String, sp98: String): Map[GasType,GasPrice] = {
@@ -225,3 +252,15 @@ def parseGas(gazole: String, sp95: String, e85: String, gpl: String, e10: String
   )
   gasMap.filter((_,v) => v != "").map((k,v) => (k,GasPrice(v.toDouble)))
 }
+
+def toIntOption(s: String): Option[Int] =
+  s match {
+    case "" => None
+    case _ => Some(s.toInt)
+  }
+
+def toDoubleOption(s: String): Option[Double] =
+  s match {
+    case "" => None
+    case _ => Some(s.toDouble)
+  }
