@@ -1,9 +1,7 @@
-import GasType._
-import com.github.tototoshi.csv.CSVReader
+import GasType.*
 import zio.Console.*
 import zio.ZIO
-import zio.stream.ZSink
-import GasStation.*
+import zio.stream.{ZSink, ZStream}
 import zio.stream.*
 import zio._
 
@@ -12,20 +10,37 @@ def makeTreatments(): ZIO[Any, Any, Unit] = {
   for {
     _ <- printLine("Reading treatments")
     count <- loadGasStationCsv()
-      .filter(_.geographicData.department.code == "75")
-      .filter(_.serviceData.automate24)
       .tap(printLine(_))
       .run(ZSink.count)
+    _ <- printLine(s"Number of stations: $count")
     sum <- loadGasStationCsv()
-      .filter(_.geographicData.department.code == "75")
-      .filter(_.serviceData.automate24)
+      .filter(_.serviceData.gasList.contains(Gazol))
       .map(_.serviceData.gasList(Gazol))
       .map(GasPrice.unapply)
       .collectSome[Double]
       .run(ZSink.sum)
-    _ <- printLine(s"Number of matching stations: $count")
-    _ <- printLine(s"Average price: ${sum / count}")
-    _ <- printLine(" \n ")
+    _ <- printLine(s"Average gazole price: ${sum/count}")
+    _ <- printLine("Now displaying data about stations in Paris which have 24h service and Gazol")
+    fcount <- applyFilters(loadGasStationCsv())
+      .run(ZSink.count)
+    fsum <- applyFilters(loadGasStationCsv())
+      .filter(_.serviceData.gasList.contains(Gazol))
+      .map(_.serviceData.gasList(Gazol))
+      .map(GasPrice.unapply)
+      .collectSome[Double]
+      .run(ZSink.sum)
+    _ <- printLine(s"Number of matching stations: $fcount")
+    _ <- printLine(s"Average gazole price: ${fsum/fcount}")
+
+    _ <- printLine("Now grouping elements by department code then counting the number of stations in each department")
+    _ <- printLine("Outputing the result as a set of (code,number of stations) couples")
+    grouped <- loadGasStationCsv()
+      .groupByKey(_.geographicData.department.code) {
+        case (k, s) => ZStream.fromZIO(s.runCollect.map(l => k -> l.size))
+      }
+      .run(ZSink.collectAllToSet)
+    _ <- printLine(grouped)
+    _ <- printLine("\n\n\n")
   } yield ()
 }
 
@@ -92,3 +107,10 @@ def calculateAverageExtraServicesPerStation(): ZIO[Any, Any, Unit] = {
     _ <- printLine(" \n ")
   } yield ()
 }
+
+def applyFilters(source : ZStream[Any, Any, GasStation]): ZStream[Any, Any, GasStation] = {
+  source
+    .filter(_.geographicData.department.code == "75")
+    .filter(_.serviceData.automate24)
+}
+
