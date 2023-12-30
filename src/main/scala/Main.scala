@@ -8,10 +8,8 @@ implicit object CustomFormat extends DefaultCSVFormat { // Notre fichier CSV uti
 }
 
 object App extends ZIOAppDefault {
-
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
       stream <- makeTreatments()
     } yield ()
-
 }
