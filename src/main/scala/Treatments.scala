@@ -29,10 +29,12 @@ object Treatments{
       _ <- printLine("Reading treatments")
       count <- loadGasStationCsv()
         .filter(_.geographicData.department.code == "75")
+        .filter(_.serviceData.automate24)
         .tap(printLine(_))
         .run(ZSink.count)
       sum <- loadGasStationCsv()
         .filter(_.geographicData.department.code == "75")
+        .filter(_.serviceData.automate24)
         .map(_.serviceData.gasList(Gazol))
         .map(GasPrice.unapply)
         .collectSome[Double]
