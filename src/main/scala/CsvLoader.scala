@@ -18,11 +18,15 @@ import Longitude.*
 import GasPrice.*
 
 import scala.util.Try
+import java.io.InputStream
+import java.io.InputStreamReader
 
 
 def loadGasStationCsv(): ZStream[Any, Any, GasStation]= {
-  val url = App.getClass.getClassLoader.getResource("stations.csv")
-  val source = CSVReader.open(url.getPath)
+  val url: java.net.URL = App.getClass.getClassLoader.getResource("stations.csv")
+  val inputStream: InputStream = url.openStream()
+  val reader: java.io.Reader = new InputStreamReader(inputStream)
+  val source = CSVReader.open(reader)
 
   ZStream
     .fromIterator[Seq[String]](source.iterator)
