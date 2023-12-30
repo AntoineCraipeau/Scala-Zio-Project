@@ -14,6 +14,8 @@ object App extends ZIOAppDefault {
       stream <- makeTreatments()
       stream <- calculateMostExpensiveGas()
       stream <- calculateMostPresentExtraService()
+      stream <- findDepartmentWithMostGasStations()
+      stream <- calculateAverageExtraServicesPerStation()
     } yield ()
 
 }

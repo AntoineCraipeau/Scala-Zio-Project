@@ -61,4 +61,25 @@ def calculateMostPresentExtraService(): ZIO[Any, Any, Unit] = {
 }
 
 
+def findDepartmentWithMostGasStations(): ZIO[Any, Any, Unit] = {
+  for {
+    gasStations <- loadGasStationCsv().runCollect // collect all station
+    departmentGasStations = gasStations.groupBy(_.geographicData.department) // group by departement
+    departmentWithMostStations = departmentGasStations.maxByOption(_._2.size) // find the highest number of gas station in the departement
+    _ <- departmentWithMostStations match {
+      case Some((department, stations)) =>
+        printLine(s"The department with the most gas stations is: $department with ${stations.size} stations")
+      case None =>
+        printLine("Issue : no gas stations found.")
+    }
+  } yield ()
+}
 
+def calculateAverageExtraServicesPerStation(): ZIO[Any, Any, Unit] = {
+  for {
+    gasStations <- loadGasStationCsv().runCollect // collect all station
+    totalExtraServices = gasStations.flatMap(_.serviceData.extraService.toList).size // count number of service
+    averageExtraServices = if (gasStations.nonEmpty) totalExtraServices.toDouble / gasStations.size else 0 // calcul the average
+    _ <- printLine(s"The average number of extra services per station is: $averageExtraServices")
+  } yield ()
+}
