@@ -12,6 +12,8 @@ object App extends ZIOAppDefault {
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
       stream <- makeTreatments()
+      stream <- calculateMostExpensiveGas()
+      stream <- calculateMostPresentExtraService()
     } yield ()
 
 }
