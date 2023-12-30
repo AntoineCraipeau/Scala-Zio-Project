@@ -25,6 +25,7 @@ def makeTreatments(): ZIO[Any, Any, Unit] = {
       .run(ZSink.sum)
     _ <- printLine(s"Number of matching stations: $count")
     _ <- printLine(s"Average price: ${sum / count}")
+    _ <- printLine(" \n ")
   } yield ()
 }
 
@@ -41,24 +42,30 @@ def calculateMostExpensiveGas(): ZIO[Any, Any, Unit] = {
       case None =>
         printLine("Issue : No type find.")
     }
+    _ <- printLine(" \n ")
   } yield ()
 }
 
 
 def calculateMostPresentExtraService(): ZIO[Any, Any, Unit] = {
   for {
-    gasStations <- loadGasStationCsv().runCollect // collect all station
+    _ <- printLine("The 5 most present services in gas stations : ")
+    gasStations <- loadGasStationCsv().runCollect // Collect all stations
     extraServiceList = gasStations.flatMap(_.serviceData.extraService)
-    extraService = extraServiceList.groupBy(identity).view.mapValues(_.length)  // count the number of occurence by type
-    mostPresentExtraService = extraService.maxByOption(_._2) // find the highest occurence type
-    _ <- mostPresentExtraService match {
-      case Some((extraService, count)) =>
-        printLine(s"The most present extra service : $extraService with a count of $count")
-      case None =>
-        printLine("Issue : No service find.")
+    extraService = extraServiceList
+      .filterNot(_ == ExtraServices.DomesticGasSales) // exclude DomesticGasSales
+      .groupBy(identity)
+      .view.mapValues(_.length) // count number of occurence
+      .toSeq
+      .sortBy(-_._2) // sort by number
+      .take(5) // take 5 of them
+    _ <- ZIO.foreach(extraService) { case (service, count) =>
+      printLine(s"Extra Service: $service, Count: $count")
     }
+    _ <- printLine(" \n ")
   } yield ()
 }
+
 
 
 def findDepartmentWithMostGasStations(): ZIO[Any, Any, Unit] = {
@@ -72,6 +79,7 @@ def findDepartmentWithMostGasStations(): ZIO[Any, Any, Unit] = {
       case None =>
         printLine("Issue : no gas stations found.")
     }
+    _ <- printLine(" \n ")
   } yield ()
 }
 
@@ -81,5 +89,6 @@ def calculateAverageExtraServicesPerStation(): ZIO[Any, Any, Unit] = {
     totalExtraServices = gasStations.flatMap(_.serviceData.extraService.toList).size // count number of service
     averageExtraServices = if (gasStations.nonEmpty) totalExtraServices.toDouble / gasStations.size else 0 // calcul the average
     _ <- printLine(s"The average number of extra services per station is: $averageExtraServices")
+    _ <- printLine(" \n ")
   } yield ()
 }
