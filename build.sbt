@@ -17,6 +17,7 @@ lazy val root = project
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-http" % zioHttpVersion,
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
-    ),
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test
+      "org.scalameta" %% "munit" % "0.7.29" % Test,
+      "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test
+    )
   )
