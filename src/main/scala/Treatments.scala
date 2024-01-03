@@ -103,5 +103,4 @@ object Treatments{
       _ <- printLine(s"Average price of Gazol in Ile-de-France : ${sum/count}")
     } yield ()
   }
-
 }
