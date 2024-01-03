@@ -23,7 +23,7 @@ import java.io.InputStreamReader
 
 
 def loadGasStationCsv(): ZStream[Any, Any, GasStation]= {
-  val url: java.net.URL = App.getClass.getClassLoader.getResource("stations.csv")
+  val url: java.net.URL = Main.getClass.getClassLoader.getResource("stations.csv")
   val inputStream: InputStream = url.openStream()
   val reader: java.io.Reader = new InputStreamReader(inputStream)
   val source = CSVReader.open(reader)
