@@ -13,8 +13,8 @@ object Main extends ZIOAppDefault {
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
       _ <- printLine("Welcome to Gas Station Treatments!")
-      _ <- printLine("1. Gas stations open 24/24 in Île-de-France")
-      _ <- printLine("2. Average price of gas in Île-de-France")
+      _ <- printLine("1. Number of gas stations in chosen department or region")
+      _ <- printLine("2. Average price of gas in chosen department or region")
       _ <- printLine("3. Most present extra services in gas stations")
       _ <- printLine("4. Department with the most gas stations")
       _ <- printLine("5. Most expensive gas type")
@@ -23,9 +23,9 @@ object Main extends ZIOAppDefault {
       choice <- readLine.orDie
       stream <- choice match {
         case "1" =>
-          countStations()
+          regionOrDepartment(choice)
         case "2" =>
-          averagePrice()
+          regionOrDepartment(choice)
         case "3" =>
           calculateMostPresentExtraService()
         case "4" =>
