@@ -18,5 +18,7 @@ lazy val root = project
       "dev.zio" %% "zio-http" % zioHttpVersion,
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
     ),
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test
+    libraryDependencies += "org.scalameta" %% "munit" % "0.7.29" % Test,
+    // Specify the main class
+    mainClass := Some("main.scala.Main"),
   )
