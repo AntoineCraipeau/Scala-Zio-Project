@@ -3,9 +3,9 @@ import com.github.tototoshi.csv.CSVReader
 import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.*
 import zio.ZIO
-import zio.stream.ZSink
 import GasStation.*
-import com.github.tototoshi.csv.DefaultCSVFormat
+import zio.stream.*
+import zio._
 
 object Treatments{
 
