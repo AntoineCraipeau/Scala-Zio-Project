@@ -158,6 +158,9 @@ enum Department(val code: String, val name: String):
   case ValdeMarne extends Department(code = "94", name = "Val-de-Marne")
   case ValdOise extends Department(code = "95", name = "Val-d'Oise")
 
+object Department:
+  def getNameByCode(code: String): Option[String] =
+    Department.values.find(_.code == code).map(_.name)
 
 enum Region (val code: String, val name: String):
   case AuvergneRhoneAlpes extends Region(code = "84", name = "Auvergne-Rhône-Alpes")
@@ -173,6 +176,10 @@ enum Region (val code: String, val name: String):
   case Occitanie extends Region(code = "76", name = "Occitanie")
   case PaysdelaLoire extends Region(code = "52", name = "Pays de la Loire")
   case ProvenceAlpesCotedAzur extends Region(code = "93", name = "Provence-Alpes-Côte d'Azur")
+
+object Region:
+  def getNameByCode(code: String): Option[String] =
+    Region.values.find(_.code == code).map(_.name)
 
 case class GeographicData(
                            population: Population,
@@ -197,7 +204,18 @@ object GasPrice: // GasStationId companion object has to be positive
 
 enum GasType:
   case SP98, SP95, Gazol, E10, Diesel, E85, GPLc
-
+object GasType:
+  def fromString(s: String): Option[GasType] =
+    s.toUpperCase match {
+      case "SP98"  => Some(SP98)
+      case "SP95"  => Some(SP95)
+      case "GAZOL" => Some(Gazol)
+      case "E10"   => Some(E10)
+      case "DIESEL" => Some(Diesel)
+      case "E85"   => Some(E85)
+      case "GPLC"  => Some(GPLc)
+      case _       => None
+    }
 
 enum ExtraServices:
   case PublicToilets, Laundry, ParcelRelay, FoodShop, NonFoodShop, TakeAwayFood, SitInRestaurant, Bar, LampOilSales, InflationStation, AdditiveFuel, VehicleRental, HeavyVehicleLane, AutomaticCarWash, ManualCarWash, DomesticGasSales, DomesticFuelSales, Wifi, ATM24_7CashMachine, CashDispenser, BabyArea, ElectricalTerminals, RepairMaintenanceServices, Showers, FuelAdditivesSales, GNV, CampingCarArea
