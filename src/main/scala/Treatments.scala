@@ -29,7 +29,6 @@ object Treatments{
     } yield ()
   }
 
-
   def calculateMostPresentExtraService(): ZIO[Any, Any, Unit] = {
     for {
       _ <- printLine("The 5 most present services in gas stations : ")
