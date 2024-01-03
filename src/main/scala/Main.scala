@@ -3,6 +3,7 @@ import com.github.tototoshi.csv.*
 import zio.stream.ZSink
 import Treatments.*
 import zio.stream.ZStream
+import zio.Console.*
 
 implicit object CustomFormat extends DefaultCSVFormat {
   override val delimiter = ';'
@@ -11,7 +12,6 @@ implicit object CustomFormat extends DefaultCSVFormat {
 object Main extends ZIOAppDefault {
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
-
       _ <- printLine("Welcome to Gas Station Treatments!")
       _ <- printLine("1. Number of gas stations in chosen department or region")
       _ <- printLine("2. Average price of gas in chosen department or region")
