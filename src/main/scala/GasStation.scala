@@ -220,6 +220,39 @@ object GasType:
 enum ExtraServices:
   case PublicToilets, Laundry, ParcelRelay, FoodShop, NonFoodShop, TakeAwayFood, SitInRestaurant, Bar, LampOilSales, InflationStation, AdditiveFuel, VehicleRental, HeavyVehicleLane, AutomaticCarWash, ManualCarWash, DomesticGasSales, DomesticFuelSales, Wifi, ATM24_7CashMachine, CashDispenser, BabyArea, ElectricalTerminals, RepairMaintenanceServices, Showers, FuelAdditivesSales, GNV, CampingCarArea
 
+object ExtraServices:
+  def fromString(s: String): Option[ExtraServices] =
+    s.toUpperCase.replace(" ","").replace("_","").replace("-","") match {
+      case "PUBLICTOILETS" => Some(PublicToilets)
+      case "LAUNDRY" => Some(Laundry)
+      case "PARCELRELAY" => Some(ParcelRelay)
+      case "FOODSHOP" => Some(FoodShop)
+      case "NONFOODSHOP" => Some(NonFoodShop)
+      case "TAKEAWAYFOOD" => Some(TakeAwayFood)
+      case "SITINRESTAURANT" => Some(SitInRestaurant)
+      case "BAR" => Some(Bar)
+      case "LAMPOILSALES" => Some(LampOilSales)
+      case "INFLATIONSTATION" => Some(InflationStation)
+      case "ADDITIVEFUEL" => Some(AdditiveFuel)
+      case "VEHICLERENTAL" => Some(VehicleRental)
+      case "HEAVYVEHICLELANE" => Some(HeavyVehicleLane)
+      case "AUTOMATICCARWASH" => Some(AutomaticCarWash)
+      case "MANUALCARWASH" => Some(ManualCarWash)
+      case "DOMESTICGASSALES" => Some(DomesticGasSales)
+      case "DOMESTICFUELSALES" => Some(DomesticFuelSales)
+      case "WIFI" => Some(Wifi)
+      case "ATM247CASHMACHINE" => Some(ATM24_7CashMachine)
+      case "CASHDISPENSER" => Some(CashDispenser)
+      case "BABYAREA" => Some(BabyArea)
+      case "ELECTRICALTERMINALS" => Some(ElectricalTerminals)
+      case "REPAIRMAINTENANCESERVICES" => Some(RepairMaintenanceServices)
+      case "SHOWERS" => Some(Showers)
+      case "FUELADDITIVESSALES" => Some(FuelAdditivesSales)
+      case "GNV" => Some(GNV)
+      case "CAMPINGCARAREA" => Some(CampingCarArea)
+      case _ => None
+    }
+
 case class ServiceData(
                         gasList: Map[GasType, GasPrice],
                         extraService: List[ExtraServices],
