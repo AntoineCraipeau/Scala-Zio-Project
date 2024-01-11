@@ -1,4 +1,4 @@
-val zioVersion = "2.0.20"
+val zioVersion = "2.0.15"
 val zioHttpVersion = "3.0.0-RC3"
 val scalaCsvVersion = "1.3.10"
 
@@ -17,10 +17,6 @@ lazy val root = project
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-http" % zioHttpVersion,
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
-      "org.scalameta" %% "munit" % "0.7.29" % Test,
-      "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test
-    ).map(_ % Compile),
-    libraryDependencies ++= Seq(
-      "org.scalameta" %% "munit" % "0.7.29"
-    ).map(_ % Test)
+      "dev.zio" %% "zio-test" % zioVersion % Test
+    )
   )
