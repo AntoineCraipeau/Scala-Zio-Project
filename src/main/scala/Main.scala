@@ -4,11 +4,25 @@ import zio.stream.ZSink
 import Treatments.*
 import zio.stream.ZStream
 import zio.Console.*
+import java.sql.{Connection, DriverManager, SQLException}
 
 implicit object CustomFormat extends DefaultCSVFormat {
   override val delimiter = ';'
 }
 object Main extends ZIOAppDefault {
+
+  val dbUrl = "jdbc:h2:mem:testdb"
+  val user = "sa"
+  val password = ""
+
+  val dbConnection = DriverManager.getConnection(dbUrl, user, password)
+  
+  createTableIfNotExists_GasStationsByRegDept(dbConnection)
+  createTableIfNotExists_AvgGasPricesByRegDept(dbConnection)
+  createTableIfNotExists_MostPresentGasStationServices(dbConnection)
+  createTableIfNotExists_DptMostGasStations(dbConnection)
+  createTableIfNotExists_MostExpensiveGasType(dbConnection)
+  
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
       _ <- printLine("Welcome to Gas Station Streams !")

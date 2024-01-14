@@ -21,8 +21,8 @@ object Treatments{
       region <- choice match {
         case "region" => ZIO.succeed(true)
         case "department" => ZIO.succeed(false)
-        case _ => 
-          printLine("Invalid choice. Please enter a valid option.") 
+        case _ =>
+          printLine("Invalid choice. Please enter a valid option.")
           regionOrDepartment(value)
       }
       _ <- if (region == true) regionCount(value) else departmentCount(value)
