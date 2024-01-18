@@ -25,6 +25,7 @@ object Main extends ZIOAppDefault {
       _ <- printLine("5. Department with the most gas stations")
       _ <- printLine("6. Most expensive gas type")
       _ <- printLine("7. Average number of extra services per station")
+      _ <- printLine("8. Average price of gas for specific extra services")
       _ <- printLine("Please enter your choice (or 'q' to quit):")
       choice <- readLine.orDie
       _ <- processChoice(choice)
@@ -46,6 +47,8 @@ object Main extends ZIOAppDefault {
         calculateMostExpensiveGas() *> printMenu
       case "7" =>
         calculateAverageExtraServicesPerStation() *> printMenu
+      case "8" =>
+        calculateAveragePriceForExtraServicesWithZStream() *> printMenu
       case "q" =>
         printLine("Exiting...") *> ZIO.unit
       case _ =>

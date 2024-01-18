@@ -40,7 +40,7 @@ object SubMenu{
         for {
         _ <- printLine("List of all regions :")
         _ <- ZIO.foreach(Region.values) { region =>
-            printLine(s"Region: ${region.name}, Code: ${region.code}")
+            printLine(s"${region.code}: ${region.name}")
         }
         _ <- printLine(" \n ")
         } yield ()
@@ -50,7 +50,7 @@ object SubMenu{
         for {
         _ <- printLine("List of all departments :")
         _ <- ZIO.foreach(Department.values) { department =>
-            printLine(s"Department: ${department.name}, Code: ${department.code}")
+            printLine(s"${department.code}: ${department.name}")
         }
         _ <- printLine(" \n ")
         } yield ()

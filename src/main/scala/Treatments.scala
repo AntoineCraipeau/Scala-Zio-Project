@@ -153,7 +153,7 @@ object Treatments{
         .run(ZSink.collectAll)
       averagePricesSorted = averagePrices.sortBy(-_._2) // sort by number
       _ <- ZIO.foreach(averagePricesSorted) { case (service, price) =>
-        printLine(s"Extra Service: $service, Average Price: $price")
+        printLine(s"Extra Service: $service => Average Price: $price")
       }
       _ <- printLine(" \n ")
     } yield ()
