@@ -1,9 +1,11 @@
+import Main.dbConnection
 import zio.*
 import com.github.tototoshi.csv.*
 import zio.stream.ZSink
 import Treatments.*
 import zio.stream.ZStream
-import zio.Console.*
+import zio.Console.{printLine, *}
+
 import java.sql.{Connection, DriverManager, SQLException}
 
 implicit object CustomFormat extends DefaultCSVFormat {
@@ -11,20 +13,29 @@ implicit object CustomFormat extends DefaultCSVFormat {
 }
 object Main extends ZIOAppDefault {
 
-  val dbUrl = "jdbc:h2:mem:testdb"
+  val dbUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
   val user = "sa"
   val password = ""
 
   val dbConnection = DriverManager.getConnection(dbUrl, user, password)
   
-  createTableIfNotExists_GasStationsByRegDept(dbConnection)
-  createTableIfNotExists_AvgGasPricesByRegDept(dbConnection)
-  createTableIfNotExists_MostPresentGasStationServices(dbConnection)
-  createTableIfNotExists_DptMostGasStations(dbConnection)
-  createTableIfNotExists_MostExpensiveGasType(dbConnection)
-  
+
+
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
+
+      _ <- printLine("Hello")
+
+      _ <- createTableIfNotExists_GasStationsByRegDept(dbConnection)
+      _ <- createTableIfNotExists_AvgGasPricesByRegDept(dbConnection)
+      _ <- createTableIfNotExists_MostPresentGasStationServices(dbConnection)
+      _ <- createTableIfNotExists_DptMostGasStations(dbConnection)
+      _ <- createTableIfNotExists_MostExpensiveGasType(dbConnection)
+
+      _ <- insertIntoGasStationsByRegDept(dbConnection,1,56,12,"REG")
+      resultSql <- selectStationsByCode(dbConnection,12,"REG")
+      _ <- printLine(resultSql)
+      _ <- printLine("Goodbye")
       _ <- printLine("Welcome to Gas Station Streams !")
       _ <- printMenu
     } yield ()
