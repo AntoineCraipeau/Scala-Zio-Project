@@ -1,5 +1,5 @@
 import zio.ZIO
-import zio.test.*
+import zio.test._
 import zio.test.Assertion.*
 
 def returnString(str: String): ZIO[Any, Nothing, String] =
