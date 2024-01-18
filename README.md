@@ -9,7 +9,13 @@ De cette façon nous effectuerons des streams pertinent traitant les éléments 
 
 ## Fonctionnalités :
 
-Statistique sur les différents éléments d'une station service comme les services, le prix des carburants....
+Statistiques sur les différents éléments d'une station-service :
+
+- Nombre de stations-service dans le département ou la région sélectionné(e)
+- Prix moyen du carburant dans le département ou la région sélectionné(e)
+- Services supplémentaires les plus courants dans les stations-service
+- Département avec le plus grand nombre de stations-service
+- Type de carburant le plus cher
 
 ### Caractéristiques clés du projet :
 
