@@ -17,14 +17,13 @@ object SubMenu{
 
     def regionOrDepartment(value: String): ZIO[Any, Any, Unit] = {
         for {
-        _ <- printLine("Do you want to search by region or department ? (region/department)")
+        _ <- printLine("Do you want to search by region or department ? (r/d)")
         choice <- readLine.orDie
         region <- choice match {
-            case "region" => ZIO.succeed(true)
-            case "department" => ZIO.succeed(false)
+            case "r" => ZIO.succeed(true)
+            case "d" => ZIO.succeed(false)
             case _ => 
-            printLine("Invalid choice. Please enter a valid option.") 
-            regionOrDepartment(value)
+            printLine("Invalid choice. Please enter a valid option.") *> regionOrDepartment(value)
         }
         _ <- if (region == true) Treatments.regionCount(value) else Treatments.departmentCount(value)
         } yield ()
