@@ -86,7 +86,7 @@ object GasStationSpec extends ZIOSpecDefault {
             }
           )
         ),
-        suite("Calculation test")(
+        suite("Extra Services test")(
           test("calculateMostPresentExtraService prints the correct result") {
             val expectedOutput = "Extra Service: InflationStation, Count: 5607"
             val test = for {
@@ -99,6 +99,14 @@ object GasStationSpec extends ZIOSpecDefault {
             val expectedOutput = "The average number of extra services per station is: 6.335167033406681"
             val test = for {
               _ <- Treatments.calculateAverageExtraServicesPerStation()
+              output <- TestConsole.output
+            } yield assertTrue(output.exists(_.contains(expectedOutput)))
+            test
+          },
+          test("calculateAveragePriceForExtraServicesWithZStream prints the correct result") {
+            val expectedOutput = "Extra Service: Showers, Average Price: 1.6540907280468928"
+            val test = for {
+              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
