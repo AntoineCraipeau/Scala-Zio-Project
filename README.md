@@ -7,7 +7,9 @@ Ce projet vise à démontrer l'utilisation de ZIO Stream, une bibliothèque puis
 L'objectif principal de ce projet est de créer une application de traitement de données robuste et efficace pour analyser les informations provenant de stations-service. Nous utilisons ZIO Stream pour sa capacité à gérer des flux de données de manière efficace et parallèle, ce qui est essentiel pour le traitement en temps réel ou en lots de grandes quantités de données.
 De cette façon nous effectuerons des streams pertinent traitant les éléments des sations service comme les services, type de gaz ou la localisation.
 
-## Fonctionnalités
+## Fonctionnalités :
+
+Statistique sur les différents éléments d'une station service comme les services, le prix des carburants....
 
 ### Caractéristiques clés du projet :
 
@@ -29,5 +31,5 @@ Pour utiliser ce projet :
 
 ## Auteurs
 
-Ce projet est développer par Bigaré Charlotte, Léo Foulloy, Romain Foucher , Antoine Craipeau et a été développé dans le cadre du projet Scala.
+Ce projet est développer par Bigaré Charlotte, Léo Foulloy, Romain Foucher, Antoine Craipeau en LSI 1 et a été développé dans le cadre du projet Scala.
 
