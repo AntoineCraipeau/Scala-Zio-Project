@@ -153,6 +153,16 @@ object GasStationSpec extends ZIOSpecDefault {
           }
         )
         ),
+        suite("Fuels test")(
+          test("calculateMostExpensiveGas prints the correct result") {
+            val expectedOutput = "Gas: SP98 => Average Fuel Price: 1.868866366928954"
+            val test = for {
+              _ <- Streams.calculateMostExpensiveGasStream()
+              output <- TestConsole.output
+            } yield assertTrue(output.exists(_.contains(expectedOutput)))
+            test
+          }
+        ),
         suite("Extra Services test")(
           test("calculateMostPresentExtraService prints the correct result") {
             val expectedOutput = "InflationStation with 5607 stations"
