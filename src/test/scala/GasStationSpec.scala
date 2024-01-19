@@ -172,18 +172,18 @@ object GasStationSpec extends ZIOSpecDefault {
             test
           },
           test("calculateAveragePriceForExtraServicesWithZStream prints the correct result") {
-            val expectedOutput = "Extra Service: Showers => Average Price: 1.6540907280468928"
+            val expectedOutput = "Extra Service: Showers => Average Fuel Price: 1.6540907280468928"
             val test = for {
-              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              _ <- Treatments.calculateAveragePriceForExtraServices()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
           },
           test("calculateAveragePriceForExtraServicesWithZStream gets same number of results when called twice") {
             val test = for {
-              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              _ <- Treatments.calculateAveragePriceForExtraServices()
               output <- TestConsole.output
-              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              _ <- Treatments.calculateAveragePriceForExtraServices()
               output2 <- TestConsole.output
             } yield assertTrue(output.size == output2.size/2)
             test

@@ -67,7 +67,7 @@ object Main extends ZIOAppDefault {
       case "7" =>
         calculateAverageExtraServicesPerStation() *> printMenu
       case "8" =>
-        calculateAveragePriceForExtraServicesWithZStream() *> printMenu
+        calculateAveragePriceForExtraServices() *> printMenu
       case "q" =>
         printLine("Exiting...") *> ZIO.unit
       case _ =>
