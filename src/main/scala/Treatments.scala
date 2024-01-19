@@ -28,8 +28,16 @@ object Treatments{
       dbResultOption <- selectStationsByCode(dbConnection, departmentCode, "DPT")
       count <- dbResultOption match {
         case Some(dbResult) =>
-          ZIO.succeed(dbResult.toDouble)
-            .tap(dbCount => printLine(s"Data found in DB: Number of stations in ${departmentName}: ${dbCount.toInt}\n"))
+          val dbCount = dbResult.toDouble
+          ZIO.succeed(dbCount)
+            .tap(_ => printLine(s"Data found in DB: Number of stations in ${departmentName}: ${dbCount.toInt}\n"))
+            .flatMap { _ =>
+              if (value != "2") {
+                averagePrice(dbConnection, false, departmentCodeStr, departmentName, dbCount).as(dbCount)
+              } else {
+                ZIO.succeed(dbCount)
+              }
+            }
         case None =>
           loadGasStationCsv()
             .filter(_.geographicData.department.code == departmentCode.toString)
@@ -37,7 +45,7 @@ object Treatments{
             .flatMap { count =>
               printLine("No data found in the database. Calculating...")
               val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, departmentCode, "DPT")
-              insertEffect *> (if (value == "1") {
+              insertEffect *> (if (value == "2") {
                 printLine(s"Number of stations in ${departmentName}: $count\n").as(count.toDouble)
               } else {
                 averagePrice(dbConnection,false , departmentCodeStr, departmentName, count).as(count.toDouble)
