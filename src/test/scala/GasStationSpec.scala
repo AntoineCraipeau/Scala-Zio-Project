@@ -6,13 +6,48 @@ import Main.*
 
 
 object GasStationSpec extends ZIOSpecDefault {
-  override def spec =
+  override def spec: Spec[Any, Any] =
     suite("GasStationSpec")(
       suite("loadGasStationCsv")(
         test("loadGasStationCsv correctly loads gas stations from CSV") {
             for {
               gasStations <- loadGasStationCsv().runCollect
             } yield assertTrue(gasStations.nonEmpty)
+        },
+        test("loadGasStationCsv gets the same results for each call") {
+          for {
+            gasStations1 <- loadGasStationCsv().runCollect
+            gasStations2 <- loadGasStationCsv().runCollect
+          } yield assertTrue(gasStations1 == gasStations2)
+        },
+        test("loadGasStationCsv produces no objects null or containing null") {
+          for {
+            gasStations <- loadGasStationCsv().runCollect
+            geographicDatas = gasStations.map(_.geographicData)
+            populations = geographicDatas.map(_.population)
+            addresses = geographicDatas.map(_.address)
+            cities = geographicDatas.map(_.city)
+            regions = geographicDatas.map(_.region)
+            departments = geographicDatas.map(_.department)
+            coordinates = geographicDatas.map(_.coordinates)
+            serviceDatas = gasStations.map(_.serviceData)
+            gasLists = serviceDatas.map(_.gasList)
+            extraServices = serviceDatas.map(_.extraService)
+            automates = serviceDatas.map(_.automate24)
+          } yield assertTrue(
+            !gasStations.contains(null) &&
+            !geographicDatas.contains(null) &&
+            !populations.contains(null) &&
+            !addresses.contains(null) &&
+            !cities.contains(null) &&
+            !regions.contains(null) &&
+            !departments.contains(null) &&
+            !coordinates.contains(null) &&
+            !serviceDatas.contains(null) &&
+            !gasLists.contains(null) &&
+            !extraServices.contains(null) &&
+            !automates.contains(null)
+          )
         }
       ),
       suite("User input")(
