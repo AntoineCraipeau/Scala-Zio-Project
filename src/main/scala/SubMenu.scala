@@ -1,21 +1,9 @@
-import GasType.*
-import com.github.tototoshi.csv.CSVReader
-import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.*
 import zio.ZIO.*
-import GasStation.*
-import zio.stream.*
 import zio.*
-import zio.Config.Bool
-
 import java.sql.Connection
 
 object SubMenu{
-
-    implicit object CustomFormat extends DefaultCSVFormat 
-    {
-        override val delimiter = ';'
-    }
 
     def regionOrDepartment(value: String, dbConnection: Connection): ZIO[Any, Any, Unit] = {
         for {
@@ -38,21 +26,23 @@ object SubMenu{
         } yield ()
     }
 
-    def printAllRegions(): ZIO[Any, Any, Unit] = {
+    private def printAllRegions(): ZIO[Any, Any, Unit] = {
         for {
         _ <- printLine("List of all regions :")
-        _ <- ZIO.foreach(Region.values) { region =>
-            printLine(s"${region.code}: ${region.name}")
+        _ <- ZIO.foreachDiscard(Region.values) {
+            region =>
+                printLine(s"${region.code}: ${region.name}")
         }
         _ <- printLine(" \n ")
         } yield ()
     }
 
-    def printAllDepartments(): ZIO[Any, Any, Unit] = {
+    private def printAllDepartments(): ZIO[Any, Any, Unit] = {
         for {
         _ <- printLine("List of all departments :")
-        _ <- ZIO.foreach(Department.values) { department =>
-            printLine(s"${department.code}: ${department.name}")
+        _ <- ZIO.foreachDiscard(Department.values) {
+            department =>
+                printLine(s"${department.code}: ${department.name}")
         }
         _ <- printLine(" \n ")
         } yield ()
