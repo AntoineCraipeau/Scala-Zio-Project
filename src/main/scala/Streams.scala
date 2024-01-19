@@ -68,21 +68,21 @@ object Streams{
     } yield mostExpensiveGases
   }
 
-  def countDepartmentStream(departmentCode: String): ZIO[Any, Any, Double] = {
+  def countDepartmentStream(departmentCode: String, mute: Boolean = false): ZIO[Any, Any, Double] = {
     for{
       count <- loadGasStationCsv()
         .filter(_.geographicData.department.code == departmentCode)
         .run(ZSink.count)
-      _ <- printLine(s"\nNumber of gas stations in $departmentCode: $count")
+      _ <- printLine(s"\nNumber of gas stations in $departmentCode: $count").unless(mute)
     }yield count
   }
 
-  def countRegionStream(regionCode: String): ZIO[Any, Any, Double] = {
+  def countRegionStream(regionCode: String, mute: Boolean = false): ZIO[Any, Any, Double] = {
     for{
       count <- loadGasStationCsv()
         .filter(_.geographicData.region.code == regionCode)
         .run(ZSink.count)
-      _ <- printLine(s"\nNumber of gas stations in $regionCode: $count")
+      _ <- printLine(s"\nNumber of gas stations in $regionCode: $count").unless(mute)
     }yield count
   }
 
