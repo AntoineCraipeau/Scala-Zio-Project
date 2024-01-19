@@ -110,7 +110,7 @@ object GasStationSpec extends ZIOSpecDefault {
           test("findDepartmentWithMostGasStations prints the correct result") {
             val expectedOutput = "Bouches-du-Rhône with 278 stations"
             val test = for {
-              count <- Streams.findSingleDepartmentWithMostGasStationsStream()
+              count <- Streams.findDepartmentWithMostGasStationsStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
@@ -156,9 +156,9 @@ object GasStationSpec extends ZIOSpecDefault {
         ),
         suite("Extra Services test")(
           test("calculateMostPresentExtraService prints the correct result") {
-            val expectedOutput = "Extra Service: InflationStation, Count: 5607"
+            val expectedOutput = "InflationStation with 5607 stations"
             val test = for {
-              _ <- Streams.calculateMostPresentExtraServiceStream()
+              _ <- Streams.findMostPresentExtraServiceStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test

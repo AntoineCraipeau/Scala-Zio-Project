@@ -170,17 +170,9 @@ object Treatments{
       _ <- existingServices match {
         case services if services.isEmpty =>
           for {
-            gasStations <- loadGasStationCsv().runCollect
-            extraServiceList = gasStations.flatMap(_.serviceData.extraService)
-            extraServiceCount = extraServiceList
-              .filterNot(_ == ExtraServices.DomesticGasSales)
-              .groupBy(identity)
-              .view.mapValues(_.length)
-              .toSeq
-              .sortBy(-_._2)
-              .take(5)
-            _ <- insertMostPresentServices(dbConnection, extraServiceCount)
-            _ <- ZIO.foreach(extraServiceCount) { case (service, count) =>
+            extraServicesCount <- findMostPresentExtraServiceStream()
+            _ <- insertMostPresentServices(dbConnection, extraServicesCount)
+            _ <- ZIO.foreachDiscard(extraServicesCount) { case (service, count) =>
               printLine(s"Extra Service: $service, Count: $count")
             }
           } yield ()
@@ -195,13 +187,12 @@ object Treatments{
 
   def findDepartmentWithMostGasStations(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
-      gasStations <- loadGasStationCsv().runCollect
-      departmentGasStations = gasStations.groupBy(_.geographicData.department)
-      departmentWithMostStations = departmentGasStations.maxByOption(_._2.size)
-      _ <- departmentWithMostStations match {
+      departmentsWithMostStations <- findDepartmentWithMostGasStationsStream()
+      firstElement = departmentsWithMostStations.headOption
+      _ <- firstElement match {
         case Some((department, stations)) =>
           val departmentName = department.name
-          val nbStations = stations.size
+          val nbStations = stations
           for {
             existingRecord <- selectDptMostGasStations(dbConnection)
             _ <- existingRecord match {

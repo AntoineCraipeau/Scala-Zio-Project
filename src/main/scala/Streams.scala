@@ -53,7 +53,8 @@ object Streams{
     }yield count
   }
 
-  def calculateMostPresentExtraServiceStream(): ZIO[Any, Any, Unit] = {
+  //Same but returns the sequence of most present extra services with their count
+  def findMostPresentExtraServiceStream(): ZIO[Any, Any, Seq[(ExtraServices, Int)]] = {
     for{
       gasStations <- loadGasStationCsv().runCollect
       extraServiceList = gasStations.flatMap(_.serviceData.extraService)
@@ -64,13 +65,11 @@ object Streams{
         .toSeq
         .sortBy(-_._2)
         .take(5)
-      _ <- ZIO.foreachDiscard(extraServiceCount) { case (service, count) =>
-          printLine(s"Extra Service: $service, Count: $count")
-        }
-    }yield ()
+      _ <- ZIO.foreachDiscard(extraServiceCount)(extraService => printLine(s"${extraService._1} with ${extraService._2} stations"))
+    }yield extraServiceCount
   }
 
-  def findSingleDepartmentWithMostGasStationsStream(): ZIO[Any, Any, Unit] = {
+  def findDepartmentWithMostGasStationsStream(): ZIO[Any, Any, Seq[(Department, Int)]] = {
     for{
       gasStations <- loadGasStationCsv().runCollect
       departmentList = gasStations.map(_.geographicData.department)
@@ -79,11 +78,9 @@ object Streams{
         .view.mapValues(_.length)
         .toSeq
         .sortBy(-_._2)
-        .take(1)
-      _ <- departmentCount.headOption match {
-        case Some((department, count)) => printLine(s"${department.name} with $count stations")
-        case None => printLine("No department found")
-      }
-    }yield ()
+        .take(5)
+      _ <- ZIO.foreachDiscard(departmentCount)(department => printLine(s"${department._1.name} with ${department._2} stations"))
+    }yield departmentCount
   }
+
 }
