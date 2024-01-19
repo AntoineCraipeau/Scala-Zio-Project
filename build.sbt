@@ -17,8 +17,6 @@ lazy val root = (project in file("."))
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-http" % zioHttpVersion,
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
-      "org.scalameta" %% "munit" % "0.7.29" % Test,
-      "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test,
       "com.h2database" % "h2" % "2.1.214",
       "dev.zio" %% "zio-test" % zioVersion % Test
     ),

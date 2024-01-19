@@ -19,7 +19,7 @@ object Treatments{
     override val delimiter = ';'
   }
 
-  def departmentCount(value: String): ZIO[Any, Any, Double] = {
+  def departmentCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
     for {
       _ <- printLine(s"\nEnter the department you want (code) :")
       departmentCodeStr <- readLine.orDie
@@ -61,7 +61,7 @@ object Treatments{
           ZIO.succeed(dbCount)
             .tap(_ => printLine(s"Data found in DB: Number of stations in ${regionName}: ${dbCount.toInt}\n"))
             .flatMap { _ =>
-              if (value != "1") {
+              if (value != "2") {
                 averagePrice(dbConnection, true, regionCodeStr, regionName, dbCount).as(dbCount)
               } else {
                 ZIO.succeed(dbCount)
@@ -74,7 +74,7 @@ object Treatments{
             .flatMap { count =>
               printLine("No data found in the database. Calculating...")
               val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, regionCode, "REG")
-              insertEffect *> (if (value == "1") {
+              insertEffect *> (if (value == "2") {
                 printLine(s"Number of stations in ${regionName}: $count\n").as(count.toDouble)
               } else {
                 averagePrice(dbConnection, true, regionCodeStr, regionName, count).as(count.toDouble)
