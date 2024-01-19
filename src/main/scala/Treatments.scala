@@ -1,6 +1,5 @@
 import GasType._
 import Streams.*
-import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.*
 import zio.ZIO.*
 import zio._
@@ -9,10 +8,6 @@ import java.sql.Connection
 import scala.util.Try
 
 object Treatments{
-
-  implicit object CustomFormat extends DefaultCSVFormat {
-    override val delimiter = ';'
-  }
 
   //Calculate the number of gas stations in a department
   def departmentCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
@@ -25,23 +20,21 @@ object Treatments{
       count <- dbResultOption match {
         case Some(dbResult) =>
           val dbCount = dbResult.toDouble
-          ZIO.succeed(dbCount)
-            .tap(_ => printLine(s"Data found in DB: Number of stations in ${departmentName}: ${dbCount.toInt}\n"))
-            .flatMap { _ =>
-              if (value != "2") {
-                averagePrice(dbConnection, false, departmentCodeStr, departmentName, dbCount).as(dbCount)
-              } else {
-                ZIO.succeed(dbCount)
-              }
+          printLine(s"Data found in DB: Number of stations in $departmentName: ${dbCount.toInt}\n").as(dbCount) *> {
+            if (value != "2") {
+              averagePrice(dbConnection, false, departmentCodeStr, departmentName, dbCount).as(dbCount)
+            } else {
+              ZIO.succeed(dbCount)
             }
+          }
         case None =>
           countDepartmentStream(departmentCode.toString)
             .flatMap { count =>
               val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, departmentCode, "DPT")
               insertEffect *> (if (value == "2") {
-                printLine(s"Number of stations in ${departmentName}: $count\n").as(count.toDouble)
+                printLine("Treatment done.\n").as(count)
               } else {
-                averagePrice(dbConnection,false , departmentCodeStr, departmentName, count).as(count.toDouble)
+                averagePrice(dbConnection,false , departmentCodeStr, departmentName, count).as(count)
               })
             }
       }
@@ -59,23 +52,21 @@ object Treatments{
       count <- dbResultOption match {
         case Some(dbResult) =>
           val dbCount = dbResult.toDouble
-          ZIO.succeed(dbCount)
-            .tap(_ => printLine(s"Data found in DB: Number of stations in ${regionName}: ${dbCount.toInt}\n"))
-            .flatMap { _ =>
-              if (value != "2") {
-                averagePrice(dbConnection, true, regionCodeStr, regionName, dbCount).as(dbCount)
-              } else {
-                ZIO.succeed(dbCount)
-              }
+          printLine(s"Data found in DB: Number of stations in $regionName: ${dbCount.toInt}\n").as(dbCount) *> {
+            if (value != "2") {
+              averagePrice(dbConnection, true, regionCodeStr, regionName, dbCount).as(dbCount)
+            } else {
+              ZIO.succeed(dbCount)
             }
+          }
         case None =>
           countRegionStream(regionCode.toString)
             .flatMap { count =>
               val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, regionCode, "REG")
               insertEffect *> (if (value == "2") {
-                printLine(s"Number of stations in ${regionName}: $count\n").as(count.toDouble)
+                printLine("Treatment done.\n").as(count)
               } else {
-                averagePrice(dbConnection, true, regionCodeStr, regionName, count).as(count.toDouble)
+                averagePrice(dbConnection, true, regionCodeStr, regionName, count).as(count)
               })
             }
       }
@@ -95,13 +86,13 @@ object Treatments{
   }
 
   //Calculate the average price of a gas type in a region
-  def averagePriceRegion(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
+  private def averagePriceRegion(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
     for {
       dbResultOption <- selectAvgPricesByCode(dbConnection, code.toInt, "REG", gasTypeStr)
       sum <- dbResultOption match {
         case Some(dbResult) =>
           ZIO.succeed(dbResult)
-            .tap(dbCount => printLine(s"Data found in DB: Average price of ${gasTypeStr} in ${name}: ${dbCount}\n"))
+            .tap(dbCount => printLine(s"Data found in DB: Average price of $gasTypeStr in $name: $dbCount\n"))
         case None =>
           averagePriceRegionStream(code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double)
             .flatMap { sum =>
@@ -110,17 +101,17 @@ object Treatments{
               insertEffect *> printLine("Treatment done.")
             }
       }
-    } yield sum
+    } yield ()
   }
 
   //Calculate the average price of a gas type in a department
-  def averagePriceDepartment(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
+  private def averagePriceDepartment(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
     for {
       dbResultOption <- selectAvgPricesByCode(dbConnection, code.toInt, "DPT", gasTypeStr)
       sum <- dbResultOption match {
         case Some(dbResult) =>
           ZIO.succeed(dbResult)
-            .tap(dbCount => printLine(s"Data found in DB: The average price of ${gasTypeStr} in ${name}: ${dbCount}\n"))
+            .tap(dbCount => printLine(s"Data found in DB: The average price of $gasTypeStr in $name: $dbCount\n"))
         case None =>
           averagePriceDepartmentStream(code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double)
             .flatMap { sum =>
@@ -129,7 +120,7 @@ object Treatments{
               insertEffect *> printLine("Treatment done.")
             }
       }
-    } yield sum
+    } yield ()
   }
 
   //Find the type of gas with the highest average price
