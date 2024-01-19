@@ -45,7 +45,7 @@ Statistiques sur les différents éléments d'une station-service :
 
 ## Schéma Fonctionelle 
 
-![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/81164857/88bbc42e-ab33-44eb-bfae-de2f554f7892)
+![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/78279804/6391b615-ad77-417a-8252-edc0c870cacf)
 
 
 ## Comment Utiliser
