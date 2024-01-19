@@ -25,6 +25,18 @@ Statistiques sur les différents éléments d'une station-service :
 
 - **Architecture Modulaire et Évolutivité** : Nous avons conçu le projet de manière modulaire, permettant l'ajout aisé de nouvelles fonctionnalités ou le remplacement de composants existants sans perturber le flux global.
 
+## Librairies
+
+- **ZIO (v2.0.21)** : Librairie Scala de programmation fonctionnelle basé sur des effets immutables et une gestion des erreurs sans exceptions, favorisant la construction de programmes concurrents et résilients. 
+
+- **ZIO-Streams**: Extension de ZIO pour la manipulation de flux de données.
+
+- **ZIO-HTTP**: Librairie pour le développement de serveurs HTTP et offrant des fonctionnalités pour le traitement des requêtes et des réponses.
+
+- **Scala-CSV** : Librairie pour la manipulation de fichiers CSV en Scala, utilisée dans le projet pour interagir avec le fichier de données au format CSV.
+
+- **ZIO-Test** : Extension de ZIO avec des fonctionnalités de test, permettant la création et l'exécution de tests.
+
 
 ## Schéma de la Base de données 
 
