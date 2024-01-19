@@ -211,7 +211,7 @@ def createTableIfNotExists_DptMostGasStations(dbConnection: Connection): ZIO[Any
   }
 }
 
-def selectDptMostGasStations(dbConnection: Connection): ZIO[Any, Throwable, Option[Int]] = {
+def selectDptMostGasStations(dbConnection: Connection): ZIO[Any, Throwable, Option[(String, Int)]] = {
   ZIO.attempt {
     val stmt = dbConnection.createStatement()
 
@@ -221,7 +221,7 @@ def selectDptMostGasStations(dbConnection: Connection): ZIO[Any, Throwable, Opti
     val resultSet = preparedStatement.executeQuery()
 
     if (resultSet.next()) {
-      Some(resultSet.getInt("nb_gas_stations"))
+      Some((resultSet.getString("name"),resultSet.getInt("nb_gas_stations")))
     } else {
       None
     }

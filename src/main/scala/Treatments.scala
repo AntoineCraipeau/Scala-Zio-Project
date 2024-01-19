@@ -184,28 +184,28 @@ object Treatments{
     } yield ()
   }
 
-
+  //Same but we check the database first
   def findDepartmentWithMostGasStations(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
-      departmentsWithMostStations <- findDepartmentWithMostGasStationsStream()
-      firstElement = departmentsWithMostStations.headOption
-      _ <- firstElement match {
-        case Some((department, stations)) =>
-          val departmentName = department.name
-          val nbStations = stations
+      existingRecord <- selectDptMostGasStations(dbConnection)
+      _ <- existingRecord match {
+        case Some(departmentName:String, count:Int) =>
+          printLine(s"Data already exists in DB: $count stations for $departmentName")
+        case None =>
           for {
-            existingRecord <- selectDptMostGasStations(dbConnection)
-            _ <- existingRecord match {
-              case Some(_) =>
-                printLine(s"Data already exists in DB: $departmentName with $nbStations stations.")
-              case None =>
+            departmentsWithMostStations <- findDepartmentWithMostGasStationsStream()
+            firstElement = departmentsWithMostStations.headOption
+            _ <- firstElement match {
+              case Some((department, stations)) =>
+                val departmentName = department.name
+                val nbStations = stations
                 for {
                   _ <- insertIntoDptMostGasStations(dbConnection, nbStations, departmentName)
                 } yield ()
+              case None =>
+                printLine("Issue: no gas stations found.")
             }
           } yield ()
-        case None =>
-          printLine("Issue: no gas stations found.")
       }
     } yield ()
   }
