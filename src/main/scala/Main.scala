@@ -1,17 +1,38 @@
+import Main.dbConnection
 import zio.*
 import com.github.tototoshi.csv.*
 import zio.stream.ZSink
 import Treatments.*
 import SubMenu.*
 import zio.stream.ZStream
-import zio.Console.*
+import zio.Console.{printLine, *}
+
+import java.sql.{Connection, DriverManager, SQLException}
 
 implicit object CustomFormat extends DefaultCSVFormat {
   override val delimiter = ';'
 }
 object Main extends ZIOAppDefault {
+
+  val dbUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
+  val user = "sa"
+  val password = ""
+
+  val dbConnection = DriverManager.getConnection(dbUrl, user, password)
+
+
+
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
+
+      _ <- createTableIfNotExists_GasStationsByRegDept(dbConnection)
+      _ <- createTableIfNotExists_AvgGasPricesByRegDept(dbConnection)
+      _ <- createTableIfNotExists_MostPresentGasStationServices(dbConnection)
+      _ <- createTableIfNotExists_DptMostGasStations(dbConnection)
+      _ <- createTableIfNotExists_MostExpensiveGasType(dbConnection)
+      _ <- createTableIfNotExists_AverageNumberOfExtraServices(dbConnection)
+      _ <- createTableIfNotExists_AverageGasPriceForExtraServices(dbConnection)
+
       _ <- printLine("Welcome to Gas Station Streams !")
       _ <- printMenu
     } yield ()
@@ -36,19 +57,19 @@ object Main extends ZIOAppDefault {
       case "1" =>
         printRegionsAndDepartments() *> printMenu
       case "2" =>
-        regionOrDepartment(choice) *> printMenu
+        regionOrDepartment(choice, dbConnection) *> printMenu
       case "3" =>
-        regionOrDepartment(choice) *> printMenu
+        regionOrDepartment(choice, dbConnection) *> printMenu
       case "4" =>
-        calculateMostPresentExtraService() *> printMenu
+        calculateMostPresentExtraService(dbConnection) *> printMenu
       case "5" =>
-        findDepartmentWithMostGasStations() *> printMenu
+        findDepartmentWithMostGasStations(dbConnection) *> printMenu
       case "6" =>
-        calculateMostExpensiveGas() *> printMenu
+        calculateMostExpensiveGas(dbConnection) *> printMenu
       case "7" =>
-        calculateAverageExtraServicesPerStation() *> printMenu
+        calculateAverageExtraServicesPerStation(dbConnection) *> printMenu
       case "8" =>
-        calculateAveragePriceForExtraServicesWithZStream() *> printMenu
+        calculateAveragePriceForExtraServices(dbConnection) *> printMenu
       case "q" =>
         printLine("Exiting...") *> ZIO.unit
       case _ =>

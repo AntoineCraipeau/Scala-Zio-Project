@@ -1,6 +1,7 @@
 val zioVersion = "2.0.21"
 val zioHttpVersion = "3.0.0-RC3"
 val scalaCsvVersion = "1.3.10"
+val h2Version = "2.2.220"
 
 val scala3Version = "3.3.1"
 
@@ -17,6 +18,7 @@ lazy val root = (project in file("."))
       "dev.zio" %% "zio-streams" % zioVersion,
       "dev.zio" %% "zio-http" % zioHttpVersion,
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
+      "com.h2database" % "h2" % h2Version,
       "dev.zio" %% "zio-test" % zioVersion % Test
     ),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")

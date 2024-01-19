@@ -1,5 +1,5 @@
 import zio.test.*
-import Treatments.*
+import Streams.*
 import Main.*
 
 object GasStationSpec extends ZIOSpecDefault {
@@ -74,8 +74,7 @@ object GasStationSpec extends ZIOSpecDefault {
             test("departmentCount prints the correct result") {
               val expectedOutput = "57"
               val test = for {
-                _ <- TestConsole.feedLines("75")
-                count <- Treatments.departmentCount("1")
+                count <- Streams.countDepartmentStream("75")
                 output <- TestConsole.output
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
@@ -83,7 +82,7 @@ object GasStationSpec extends ZIOSpecDefault {
             test("averagePriceDepartment prints the correct result") {
               val expectedOutput = "1.1369473684210525"
               val test = for {
-                _ <- Treatments.averagePriceDepartment("75", "Paris", GasType.E10, "E10", 57)
+                _ <- Streams.averagePriceDepartmentStream("75", "Paris", GasType.E10, "E10", 57)
                 output <- TestConsole.output
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
@@ -93,8 +92,7 @@ object GasStationSpec extends ZIOSpecDefault {
             test("departmentCount prints the correct result") {
               val expectedOutput = "183"
               val test = for {
-                _ <- TestConsole.feedLines("83")
-                count <- Treatments.departmentCount("1")
+                count <- Streams.countDepartmentStream("83")
                 output <- TestConsole.output
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
@@ -102,16 +100,16 @@ object GasStationSpec extends ZIOSpecDefault {
             test("averagePriceDepartment prints the correct result") {
               val expectedOutput = "1.5270710382513664"
               val test = for {
-                _ <- Treatments.averagePriceDepartment("83", "Var", GasType.E10, "E10", 183)
+                _ <- Streams.averagePriceDepartmentStream("83", "Var", GasType.E10, "E10", 183)
                 output <- TestConsole.output
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
             }
           ),
           test("findDepartmentWithMostGasStations prints the correct result") {
-            val expectedOutput = "BouchesduRhone with 278 stations"
+            val expectedOutput = "Bouches-du-Rhône with 278 stations"
             val test = for {
-              count <- Treatments.findDepartmentWithMostGasStations()
+              count <- Streams.findDepartmentWithMostGasStationsStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
@@ -122,8 +120,7 @@ object GasStationSpec extends ZIOSpecDefault {
             test("regionCount prints the correct result") {
               val expectedOutput = "892"
               val test = for {
-                _ <- TestConsole.feedLines("11")
-                count <- Treatments.regionCount("1")
+                count <- Streams.countRegionStream("11")
                 output <- TestConsole.output
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
@@ -131,7 +128,7 @@ object GasStationSpec extends ZIOSpecDefault {
             test("averagePriceRegion prints the correct result") {
               val expectedOutput = "1.6593699551569516"
               val test = for {
-                _ <- Treatments.averagePriceRegion("11", "Île-de-France", GasType.SP98, "SP98", 892)
+                _ <- Streams.averagePriceRegionStream("11", "Île-de-France", GasType.SP98, "SP98", 892)
                 output <- TestConsole.output
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
@@ -141,8 +138,7 @@ object GasStationSpec extends ZIOSpecDefault {
           test("regionCount prints the correct result") {
             val expectedOutput = "569"
             val test = for {
-              _ <- TestConsole.feedLines("28")
-              count <- Treatments.regionCount("1")
+              count <- Streams.countRegionStream("28")
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
@@ -150,7 +146,7 @@ object GasStationSpec extends ZIOSpecDefault {
           test("averagePriceRegion prints the correct result") {
             val expectedOutput = "1.5042231985940249"
             val test = for {
-              _ <- Treatments.averagePriceRegion("28", "Normandie", GasType.SP98, "SP98", 569)
+              _ <- Streams.averagePriceRegionStream("28", "Normandie", GasType.SP98, "SP98", 569)
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
@@ -159,9 +155,9 @@ object GasStationSpec extends ZIOSpecDefault {
         ),
         suite("Extra Services test")(
           test("calculateMostPresentExtraService prints the correct result") {
-            val expectedOutput = "Extra Service: InflationStation, Count: 5607"
+            val expectedOutput = "InflationStation with 5607 stations"
             val test = for {
-              _ <- Treatments.calculateMostPresentExtraService()
+              _ <- Streams.findMostPresentExtraServiceStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
@@ -169,24 +165,24 @@ object GasStationSpec extends ZIOSpecDefault {
           test("calculateAverageExtraServicesPerStation prints the correct result") {
             val expectedOutput = "The average number of extra services per station is: 6.335167033406681"
             val test = for {
-              _ <- Treatments.calculateAverageExtraServicesPerStation()
+              _ <- Streams.calculateAverageExtraServicePerStationStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
           },
           test("calculateAveragePriceForExtraServicesWithZStream prints the correct result") {
-            val expectedOutput = "Extra Service: Showers, Average Price: 1.6540907280468928"
+            val expectedOutput = "Extra Service: Showers => Average Fuel Price: 1.6540907280468928"
             val test = for {
-              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              _ <- Streams.calculateAveragePriceForExtraServicesStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
           },
           test("calculateAveragePriceForExtraServicesWithZStream gets same number of results when called twice") {
             val test = for {
-              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              _ <- Streams.calculateAveragePriceForExtraServicesStream()
               output <- TestConsole.output
-              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              _ <- Streams.calculateAveragePriceForExtraServicesStream()
               output2 <- TestConsole.output
             } yield assertTrue(output.size == output2.size/2)
             test
