@@ -145,6 +145,15 @@ object GasStationSpec extends ZIOSpecDefault {
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
+          },
+          test("calculateAveragePriceForExtraServicesWithZStream gets same results when called twice") {
+            val test = for {
+              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              output <- TestConsole.output
+              _ <- Treatments.calculateAveragePriceForExtraServicesWithZStream()
+              output2 <- TestConsole.output
+            } yield assertTrue(output == output2)
+            test
           }
         )
       )
