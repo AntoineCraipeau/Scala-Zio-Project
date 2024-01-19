@@ -24,18 +24,12 @@ object Main extends ZIOAppDefault {
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
 
-      _ <- printLine("Hello")
-
       _ <- createTableIfNotExists_GasStationsByRegDept(dbConnection)
       _ <- createTableIfNotExists_AvgGasPricesByRegDept(dbConnection)
       _ <- createTableIfNotExists_MostPresentGasStationServices(dbConnection)
       _ <- createTableIfNotExists_DptMostGasStations(dbConnection)
       _ <- createTableIfNotExists_MostExpensiveGasType(dbConnection)
 
-      _ <- insertIntoGasStationsByRegDept(dbConnection,1,56,12,"REG")
-      resultSql <- selectStationsByCode(dbConnection,12,"REG")
-      _ <- printLine(resultSql)
-      _ <- printLine("Goodbye")
       _ <- printLine("Welcome to Gas Station Streams !")
       _ <- printMenu
     } yield ()
@@ -55,15 +49,15 @@ object Main extends ZIOAppDefault {
   def processChoice(choice: String): ZIO[Any, Any, Unit] =
     choice match {
       case "1" =>
-        regionOrDepartment(choice) *> printMenu
+        regionOrDepartment(choice, dbConnection) *> printMenu
       case "2" =>
-        regionOrDepartment(choice) *> printMenu
+        regionOrDepartment(choice, dbConnection) *> printMenu
       case "3" =>
-        calculateMostPresentExtraService() *> printMenu
+        calculateMostPresentExtraService(dbConnection) *> printMenu
       case "4" =>
-        findDepartmentWithMostGasStations() *> printMenu
+        findDepartmentWithMostGasStations(dbConnection) *> printMenu
       case "5" =>
-        calculateMostExpensiveGas() *> printMenu
+        calculateMostExpensiveGas(dbConnection) *> printMenu
       case "q" =>
         printLine("Exiting...") *> ZIO.unit
       case _ =>

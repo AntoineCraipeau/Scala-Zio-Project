@@ -1,12 +1,16 @@
-import GasType._
+import GasType.*
 import com.github.tototoshi.csv.CSVReader
 import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.*
 import zio.ZIO.*
 import GasStation.*
 import zio.stream.*
-import zio._
+import zio.{ZIO, *}
 import zio.Config.Bool
+
+import java.sql.Connection
+import java.sql.Statement
+import scala.util.Try
 
 object Treatments{
 
@@ -14,7 +18,7 @@ object Treatments{
     override val delimiter = ';'
   }
 
-  def regionOrDepartment(value: String): ZIO[Any, Any, Unit] = {
+  def regionOrDepartment(value: String, dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
       _ <- printLine("Do you want to search by region or department ? (region/department)")
       choice <- readLine.orDie
@@ -23,123 +27,220 @@ object Treatments{
         case "department" => ZIO.succeed(false)
         case _ =>
           printLine("Invalid choice. Please enter a valid option.")
-          regionOrDepartment(value)
+          regionOrDepartment(value, dbConnection)
       }
-      _ <- if (region == true) regionCount(value) else departmentCount(value)
+      _ <- if (region == true) regionCount(value, dbConnection) else departmentCount(value, dbConnection)
     } yield ()
   }
 
-  def departmentCount(value: String): ZIO[Any, Any, Double] = {
+  def departmentCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
     for {
       _ <- printLine(s"\nEnter the department you want (code) :")
-      departmentCode <- readLine.orDie
-      departmentName <- ZIO.fromOption(Department.getNameByCode(departmentCode)).orElseFail("Invalid department code")
-      count <- loadGasStationCsv()
-        .filter(_.geographicData.department.code == departmentCode)
-        .run(ZSink.count)
-      _ <- if(value == "1") printLine(s"Number of stations in ${departmentName}: $count\n")
-           else averagePrice(false, departmentCode, departmentName, count)
+      departmentCodeStr <- readLine.orDie
+      departmentName <- ZIO.fromOption(Department.getNameByCode(departmentCodeStr)).orElseFail("Invalid department code")
+      departmentCode <- ZIO.fromTry(Try(departmentCodeStr.toInt)).orElseFail("Invalid department code: Not a number")
+      dbResultOption <- selectStationsByCode(dbConnection, departmentCode, "DPT")
+      count <- dbResultOption match {
+        case Some(dbResult) =>
+          ZIO.succeed(dbResult.toDouble)
+            .tap(dbCount => printLine(s"Data found in DB: Number of stations in ${departmentName}: ${dbCount.toInt}\n"))
+        case None =>
+          loadGasStationCsv()
+            .filter(_.geographicData.department.code == departmentCode.toString)
+            .run(ZSink.count)
+            .flatMap { count =>
+              printLine("No data found in the database. Calculating...")
+              val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, departmentCode, "DPT")
+              insertEffect *> (if (value == "1") {
+                printLine(s"Number of stations in ${departmentName}: $count\n").as(count.toDouble)
+              } else {
+                averagePrice(dbConnection,false , departmentCodeStr, departmentName, count).as(count.toDouble)
+              })
+            }
+      }
     } yield count
   }
 
-  def regionCount(value: String): ZIO[Any, Any, Double] = {
+
+  def regionCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
     for {
       _ <- printLine(s"\nEnter the region you want (code) :")
-      regionCode <- readLine.orDie
-      regionName <- ZIO.fromOption(Region.getNameByCode(regionCode)).orElseFail("Invalid region code")
-      count <- loadGasStationCsv()
-        .filter(_.geographicData.region.code == regionCode)
-        .run(ZSink.count)
-      _ <- if(value == "1") printLine(s"Number of stations in ${regionName}: $count\n") 
-           else averagePrice(true, regionCode, regionName, count)
+      regionCodeStr <- readLine.orDie
+      regionName <- ZIO.fromOption(Region.getNameByCode(regionCodeStr)).orElseFail("Invalid region code")
+      regionCode <- ZIO.fromTry(Try(regionCodeStr.toInt)).orElseFail("Invalid region code: Not a number")
+      dbResultOption <- selectStationsByCode(dbConnection, regionCode, "REG")
+      count <- dbResultOption match {
+        case Some(dbResult) =>
+          val dbCount = dbResult.toDouble
+          ZIO.succeed(dbCount)
+            .tap(_ => printLine(s"Data found in DB: Number of stations in ${regionName}: ${dbCount.toInt}\n"))
+            .flatMap { _ =>
+              if (value != "1") {
+                averagePrice(dbConnection, true, regionCodeStr, regionName, dbCount).as(dbCount)
+              } else {
+                ZIO.succeed(dbCount)
+              }
+            }
+        case None =>
+          loadGasStationCsv()
+            .filter(_.geographicData.department.code == regionCode.toString)
+            .run(ZSink.count)
+            .flatMap { count =>
+              printLine("No data found in the database. Calculating...")
+              val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, regionCode, "REG")
+              insertEffect *> (if (value == "1") {
+                printLine(s"Number of stations in ${regionName}: $count\n").as(count.toDouble)
+              } else {
+                averagePrice(dbConnection, true, regionCodeStr, regionName, count).as(count.toDouble)
+              })
+            }
+      }
     } yield count
   }
 
-  def averagePrice(region: Boolean, code: String, name: String, count: Double): ZIO[Any, Any, Unit] = {
+
+  def averagePrice(dbConnection: Connection, region: Boolean, code: String, name: String, count: Double): ZIO[Any, Any, Unit] = {
     for{
       _ <- printLine(s"\nEnter the type of gas (GAZOL, E10, SP98, DIESEL, etc.) :")
       gasTypeStr <- readLine.orDie
       gasTypeOpt = GasType.fromString(gasTypeStr)
       gasType    <- ZIO.fromOption(gasTypeOpt).orElseFail("Invalid GasType")
-      _ <- if(region) averagePriceRegion(code, name, gasType, gasTypeStr, count) 
-           else averagePriceDepartment(code, name, gasType, gasTypeStr, count)
+      _ <- if(region) averagePriceRegion(dbConnection ,code, name, gasType, gasTypeStr, count)
+           else averagePriceDepartment(dbConnection, code, name, gasType, gasTypeStr, count)
     } yield ()
   }
 
-  def averagePriceRegion(code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
-    for{
-      sum <- loadGasStationCsv()
-        .filter(_.geographicData.region.code == code)
-        .filter(_.serviceData.gasList.contains(gasType))
-        .map(_.serviceData.gasList(gasType))
-        .map(GasPrice.unapply)
-        .collectSome[Double]
-        .run(ZSink.sum)
-      _ <- printLine(s"\nAverage price of ${gasTypeStr} in ${name}: ${sum/count}")
-    } yield ()
-  }
-
-  def averagePriceDepartment(code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
-    for{
-      sum <- loadGasStationCsv()
-        .filter(_.geographicData.department.code == code)
-        .filter(_.serviceData.gasList.contains(gasType))
-        .map(_.serviceData.gasList(gasType))
-        .map(GasPrice.unapply)
-        .collectSome[Double]
-        .run(ZSink.sum)
-      _ <- printLine(s"\nAverage price of ${gasTypeStr} in ${name}: ${sum/count}")
-    } yield ()
-  }
-
-  def calculateMostExpensiveGas(): ZIO[Any, Any, Unit] = {
+  def averagePriceRegion(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
     for {
-      gasStations <- loadGasStationCsv().runCollect     // collect all the station
-      gasList = gasStations.flatMap(_.serviceData.gasList)
-      gasPrices = gasList.groupBy(_._1).view.mapValues(_.map(_._2)) // group by type
-      avgPrices = gasPrices.mapValues(prices => prices.flatMap(GasPrice.unapply).foldLeft(0.0)(_ + _) / prices.length.toDouble) // calcul price for each type
-      mostExpensiveGas = avgPrices.maxByOption(_._2) // find the most expensive
-      _ <- mostExpensiveGas match {
-        case Some((gas, price)) =>
-          printLine(s"The gas type with the highest average price is: $gas with an average price of $price")
+      dbResultOption <- selectAvgPricesByCode(dbConnection, code.toInt, "REG", gasTypeStr)
+      sum <- dbResultOption match {
+        case Some(dbResult) =>
+          ZIO.succeed(dbResult)
+            .tap(dbCount => printLine(s"Data found in DB: Average price of ${gasTypeStr} in ${name}: ${dbCount}\n"))
         case None =>
-          printLine("Issue : No type find.")
+          loadGasStationCsv()
+            .filter(_.geographicData.region.code == code)
+            .filter(_.serviceData.gasList.contains(gasType))
+            .map(_.serviceData.gasList(gasType))
+            .map(GasPrice.unapply)
+            .collectSome[Double]
+            .run(ZSink.sum)
+            .flatMap { sum =>
+              printLine("No data found in the database. Calculating...")
+              val result = sum / count
+              val insertEffect = insertIntoAvgPricesByRegDept(dbConnection, result, code.toInt, "REG", gasTypeStr)
+              insertEffect *> printLine(s"\nAverage price of ${gasTypeStr} in ${name}: ${sum / count}")
+            }
       }
-      _ <- printLine(" \n ")
+    } yield sum
+  }
+
+  def averagePriceDepartment(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
+    for {
+      dbResultOption <- selectAvgPricesByCode(dbConnection, code.toInt, "DPT", gasTypeStr)
+      sum <- dbResultOption match {
+        case Some(dbResult) =>
+          ZIO.succeed(dbResult)
+            .tap(dbCount => printLine(s"Data found in DB: The average price of ${gasTypeStr} in ${name}: ${dbCount}\n"))
+        case None =>
+          loadGasStationCsv()
+            .filter(_.geographicData.department.code == code)
+            .filter(_.serviceData.gasList.contains(gasType))
+            .map(_.serviceData.gasList(gasType))
+            .map(GasPrice.unapply)
+            .collectSome[Double]
+            .run(ZSink.sum)
+            .flatMap { sum =>
+              val result = sum / count
+              printLine("No data found in the database. Calculating...")
+              val insertEffect = insertIntoAvgPricesByRegDept(dbConnection, result, code.toInt, "DPT", gasTypeStr)
+              insertEffect *> printLine(s"\nAverage price of ${gasTypeStr} in ${name}: ${sum / count}")
+            }
+      }
+    } yield sum
+  }
+
+  def calculateMostExpensiveGas(dbConnection: Connection): ZIO[Any, Any, Unit] = {
+    for {
+      gasStations <- loadGasStationCsv().runCollect
+      gasList = gasStations.flatMap(_.serviceData.gasList)
+      gasPrices = gasList.groupBy(_._1).view.mapValues(_.map(_._2))
+      avgPrices = gasPrices.mapValues(prices => prices.flatMap(GasPrice.unapply).foldLeft(0.0)(_ + _) / prices.length.toDouble)
+      mostExpensiveGas = avgPrices.maxByOption(_._2)
+      _ <- mostExpensiveGas match {
+        case Some((gasName, price)) =>
+          for {
+            existingRecord <- selectMostExpensiveGas(dbConnection)
+            _ <- existingRecord match {
+              case Some(_) =>
+                printLine(s"Data already exists in DB: The most expensive gas is $gasName with an average price of $price.")
+              case None =>
+                for {
+                  _ <- insertMostExpensiveGas(dbConnection, gasName.toString, price)
+                } yield ()
+            }
+          } yield ()
+        case None =>
+          printLine("Issue: no gas types found.")
+      }
     } yield ()
   }
 
-  def calculateMostPresentExtraService(): ZIO[Any, Any, Unit] = {
+
+
+  def calculateMostPresentExtraService(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
-      _ <- printLine("The 5 most present services in gas stations : ")
-      gasStations <- loadGasStationCsv().runCollect // Collect all stations
-      extraServiceList = gasStations.flatMap(_.serviceData.extraService)
-      extraService = extraServiceList
-        .filterNot(_ == ExtraServices.DomesticGasSales) // exclude DomesticGasSales
-        .groupBy(identity)
-        .view.mapValues(_.length) // count number of occurence
-        .toSeq
-        .sortBy(-_._2) // sort by number
-        .take(5) // take 5 of them
-      _ <- ZIO.foreach(extraService) { case (service, count) =>
-        printLine(s"Extra Service: $service, Count: $count")
+      _ <- printLine("The 5 most present services in gas stations: ")
+      existingServices <- selectMostPresentServices(dbConnection)
+      _ <- existingServices match {
+        case services if services.isEmpty =>
+          for {
+            gasStations <- loadGasStationCsv().runCollect
+            extraServiceList = gasStations.flatMap(_.serviceData.extraService)
+            extraServiceCount = extraServiceList
+              .filterNot(_ == ExtraServices.DomesticGasSales)
+              .groupBy(identity)
+              .view.mapValues(_.length)
+              .toSeq
+              .sortBy(-_._2)
+              .take(5)
+            _ <- insertMostPresentServices(dbConnection, extraServiceCount)
+            _ <- ZIO.foreach(extraServiceCount) { case (service, count) =>
+              printLine(s"Extra Service: $service, Count: $count")
+            }
+          } yield ()
+        case services =>
+          ZIO.foreach(services) { case (service, count) =>
+            printLine(s"From DB: Extra Service: $service, Count: $count")
+          }
       }
-      _ <- printLine(" \n ")
     } yield ()
   }
 
-  def findDepartmentWithMostGasStations(): ZIO[Any, Any, Unit] = {
+
+  def findDepartmentWithMostGasStations(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
-      gasStations <- loadGasStationCsv().runCollect // collect all station
-      departmentGasStations = gasStations.groupBy(_.geographicData.department) // group by departement
-      departmentWithMostStations = departmentGasStations.maxByOption(_._2.size) // find the highest number of gas station in the departement
+      gasStations <- loadGasStationCsv().runCollect
+      departmentGasStations = gasStations.groupBy(_.geographicData.department)
+      departmentWithMostStations = departmentGasStations.maxByOption(_._2.size)
       _ <- departmentWithMostStations match {
         case Some((department, stations)) =>
-          printLine(s"The department with the most gas stations is: $department with ${stations.size} stations")
+          val departmentName = department.name
+          val nbStations = stations.size
+          for {
+            existingRecord <- selectDptMostGasStations(dbConnection)
+            _ <- existingRecord match {
+              case Some(_) =>
+                printLine(s"Data already exists in DB: $departmentName with $nbStations stations.")
+              case None =>
+                for {
+                  _ <- insertIntoDptMostGasStations(dbConnection, nbStations, departmentName)
+                } yield ()
+            }
+          } yield ()
         case None =>
-          printLine("Issue : no gas stations found.")
+          printLine("Issue: no gas stations found.")
       }
-      _ <- printLine(" \n ")
     } yield ()
   }
 
