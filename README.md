@@ -25,17 +25,41 @@ Statistiques sur les différents éléments d'une station-service :
 
 - **Architecture Modulaire et Évolutivité** : Nous avons conçu le projet de manière modulaire, permettant l'ajout aisé de nouvelles fonctionnalités ou le remplacement de composants existants sans perturber le flux global.
 
+## Librairies
+
+- **ZIO (v2.0.21)** : Librairie Scala de programmation fonctionnelle basé sur des effets immutables et une gestion des erreurs sans exceptions, favorisant la construction de programmes concurrents et résilients. 
+
+- **ZIO-Streams (v2.0.21)**: Extension de ZIO pour la manipulation de flux de données.
+
+- **ZIO-HTTP (3.0.0-RC3)**: Librairie pour le développement de serveurs HTTP et offrant des fonctionnalités pour le traitement des requêtes et des réponses.
+
+- **Scala-CSV (v1.3.10)** : Librairie pour la manipulation de CSV en Scala, utilisée dans le projet pour interagir avec le fichier de données au format CSV.
+
+- **ZIO-Test (v2.0.21)** : Extension de ZIO avec des fonctionnalités de test, permettant la création et l'exécution de tests.
+
+
+## Schéma de la Base de données 
+
+![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/81164857/69a46063-36ff-4fd7-8682-541ca967a74b)
+
+
+## Schéma Fonctionelle 
+
+![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/78279804/cb4b89f1-bad7-445d-80e1-46a3a0cf45f8)
+
+
 ## Comment Utiliser
 
 Pour utiliser ce projet :
 
 1. Clonez le dépôt vers votre machine locale.
 2. Assurez-vous d'avoir les dépendances nécessaires et la version appropriée de Scala et de ZIO.
-3. Exécutez les commandes nécessaires pour compiler et exécuter le code.
-4. Utilisez le CLI pour accéder aux différents streams
+3. Exécutez les commandes nécessaires pour compiler et exécuter le code (sbt compile, sbt run).
+4. Exécutez les commandes nécessaires pour lancer les tests (sbt test).
+5. Utilisez le CLI pour accéder aux différents streams.
 
 
 ## Auteurs
 
-Ce projet est développé par Bigaré Charlotte, Léo Foulloy, Romain Foucher, Antoine Craipeau en LSI 1 et a été développé dans le cadre du projet Scala.
+Ce projet est développé par Charlotte Bigaré, Léo Foulloy, Romain Foucher, Antoine Craipeau en M1-APP LSI 1 et a été développé dans le cadre du projet Scala.
 
