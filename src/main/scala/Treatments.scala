@@ -1,5 +1,6 @@
 import GasType._
 import GasType.*
+import Streams.*
 import com.github.tototoshi.csv.CSVReader
 import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.*
@@ -39,11 +40,8 @@ object Treatments{
               }
             }
         case None =>
-          loadGasStationCsv()
-            .filter(_.geographicData.department.code == departmentCode.toString)
-            .run(ZSink.count)
+          countDepartmentStream(departmentCode.toString)
             .flatMap { count =>
-              printLine("No data found in the database. Calculating...")
               val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, departmentCode, "DPT")
               insertEffect *> (if (value == "2") {
                 printLine(s"Number of stations in ${departmentName}: $count\n").as(count.toDouble)
@@ -76,11 +74,8 @@ object Treatments{
               }
             }
         case None =>
-          loadGasStationCsv()
-            .filter(_.geographicData.department.code == regionCode.toString)
-            .run(ZSink.count)
+          countRegionStream(regionCode.toString)
             .flatMap { count =>
-              printLine("No data found in the database. Calculating...")
               val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, regionCode, "REG")
               insertEffect *> (if (value == "2") {
                 printLine(s"Number of stations in ${regionName}: $count\n").as(count.toDouble)
@@ -112,18 +107,11 @@ object Treatments{
           ZIO.succeed(dbResult)
             .tap(dbCount => printLine(s"Data found in DB: Average price of ${gasTypeStr} in ${name}: ${dbCount}\n"))
         case None =>
-          loadGasStationCsv()
-            .filter(_.geographicData.region.code == code)
-            .filter(_.serviceData.gasList.contains(gasType))
-            .map(_.serviceData.gasList(gasType))
-            .map(GasPrice.unapply)
-            .collectSome[Double]
-            .run(ZSink.sum)
+          averagePriceRegionStream(code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double)
             .flatMap { sum =>
-              printLine("No data found in the database. Calculating...")
               val result = sum / count
               val insertEffect = insertIntoAvgPricesByRegDept(dbConnection, result, code.toInt, "REG", gasTypeStr)
-              insertEffect *> printLine(s"\nAverage price of ${gasTypeStr} in ${name}: ${sum / count}")
+              insertEffect *> printLine("Treatment done.")
             }
       }
     } yield sum
@@ -137,18 +125,11 @@ object Treatments{
           ZIO.succeed(dbResult)
             .tap(dbCount => printLine(s"Data found in DB: The average price of ${gasTypeStr} in ${name}: ${dbCount}\n"))
         case None =>
-          loadGasStationCsv()
-            .filter(_.geographicData.department.code == code)
-            .filter(_.serviceData.gasList.contains(gasType))
-            .map(_.serviceData.gasList(gasType))
-            .map(GasPrice.unapply)
-            .collectSome[Double]
-            .run(ZSink.sum)
+          averagePriceDepartmentStream(code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double)
             .flatMap { sum =>
               val result = sum / count
-              printLine("No data found in the database. Calculating...")
               val insertEffect = insertIntoAvgPricesByRegDept(dbConnection, result, code.toInt, "DPT", gasTypeStr)
-              insertEffect *> printLine(s"\nAverage price of ${gasTypeStr} in ${name}: ${sum / count}")
+              insertEffect *> printLine("Treatment done.")
             }
       }
     } yield sum
