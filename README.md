@@ -33,7 +33,7 @@ Statistiques sur les différents éléments d'une station-service :
 
 - **ZIO-HTTP (3.0.0-RC3)**: Librairie pour le développement de serveurs HTTP et offrant des fonctionnalités pour le traitement des requêtes et des réponses.
 
-- **Scala-CSV (v2.0.21)** : Librairie pour la manipulation de CSV en Scala, utilisée dans le projet pour interagir avec le fichier de données au format CSV.
+- **Scala-CSV (v1.3.10)** : Librairie pour la manipulation de CSV en Scala, utilisée dans le projet pour interagir avec le fichier de données au format CSV.
 
 - **ZIO-Test (v2.0.21)** : Extension de ZIO avec des fonctionnalités de test, permettant la création et l'exécution de tests.
 
