@@ -45,7 +45,7 @@ Statistiques sur les différents éléments d'une station-service :
 
 ## Schéma Fonctionelle 
 
-![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/78279804/6391b615-ad77-417a-8252-edc0c870cacf)
+![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/78279804/cb4b89f1-bad7-445d-80e1-46a3a0cf45f8)
 
 
 ## Comment Utiliser
@@ -54,11 +54,12 @@ Pour utiliser ce projet :
 
 1. Clonez le dépôt vers votre machine locale.
 2. Assurez-vous d'avoir les dépendances nécessaires et la version appropriée de Scala et de ZIO.
-3. Exécutez les commandes nécessaires pour compiler et exécuter le code.
-4. Utilisez le CLI pour accéder aux différents streams
+3. Exécutez les commandes nécessaires pour compiler et exécuter le code (sbt compile, sbt run).
+4. Exécutez les commandes nécessaires pour lancer les tests (sbt test).
+5. Utilisez le CLI pour accéder aux différents streams.
 
 
 ## Auteurs
 
-Ce projet est développé par Bigaré Charlotte, Léo Foulloy, Romain Foucher, Antoine Craipeau en LSI 1 et a été développé dans le cadre du projet Scala.
+Ce projet est développé par Charlotte Bigaré, Léo Foulloy, Romain Foucher, Antoine Craipeau en M1-APP LSI 1 et a été développé dans le cadre du projet Scala.
 
