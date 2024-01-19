@@ -1,4 +1,4 @@
-val zioVersion = "2.0.20"
+val zioVersion = "2.0.21"
 val zioHttpVersion = "3.0.0-RC3"
 val scalaCsvVersion = "1.3.10"
 
@@ -8,8 +8,8 @@ ThisBuild / organization := "fr.efrei"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := scala3Version
 
-lazy val root = project
-  .in(file("."))
+
+lazy val root = (project in file("."))
   .settings(
     name := "Scala-Zio-Project",
     libraryDependencies ++= Seq(
@@ -19,6 +19,8 @@ lazy val root = project
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
       "org.scalameta" %% "munit" % "0.7.29" % Test,
       "org.scalameta" %% "munit-scalacheck" % "0.7.29" % Test,
-      "com.h2database" % "h2" % "2.1.214"
-    )
+      "com.h2database" % "h2" % "2.1.214",
+      "dev.zio" %% "zio-test" % zioVersion % Test
+    ),
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )

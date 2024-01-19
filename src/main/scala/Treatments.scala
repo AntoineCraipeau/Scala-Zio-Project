@@ -1,10 +1,11 @@
+import GasType._
 import GasType.*
 import com.github.tototoshi.csv.CSVReader
 import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.*
 import zio.ZIO.*
-import GasStation.*
 import zio.stream.*
+import zio._
 import zio.{ZIO, *}
 import zio.Config.Bool
 
@@ -18,22 +19,7 @@ object Treatments{
     override val delimiter = ';'
   }
 
-  def regionOrDepartment(value: String, dbConnection: Connection): ZIO[Any, Any, Unit] = {
-    for {
-      _ <- printLine("Do you want to search by region or department ? (region/department)")
-      choice <- readLine.orDie
-      region <- choice match {
-        case "region" => ZIO.succeed(true)
-        case "department" => ZIO.succeed(false)
-        case _ =>
-          printLine("Invalid choice. Please enter a valid option.")
-          regionOrDepartment(value, dbConnection)
-      }
-      _ <- if (region == true) regionCount(value, dbConnection) else departmentCount(value, dbConnection)
-    } yield ()
-  }
-
-  def departmentCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
+  def departmentCount(value: String): ZIO[Any, Any, Double] = {
     for {
       _ <- printLine(s"\nEnter the department you want (code) :")
       departmentCodeStr <- readLine.orDie
@@ -253,4 +239,29 @@ object Treatments{
       _ <- printLine(" \n ")
     } yield ()
   }
+
+  //Calculate the AVERAGE price of all gas types combined in stations where specific extra services are available using mapPar to perform the operation for each extra service in parallel
+  //Then sort and print the results in descending order
+  def calculateAveragePriceForExtraServicesWithZStream(): ZIO[Any, Any, Unit] = {
+    for {
+      gasStations <- loadGasStationCsv().runCollect // collect all station
+      extraServices = gasStations.flatMap(_.serviceData.extraService.toList).distinct // get all extra services
+      averagePrices <- ZStream.fromIterable(extraServices)
+        .mapZIOPar(extraServices.size) { extraService =>
+          val gasStationsWithExtraService = gasStations.filter(_.serviceData.extraService.contains(extraService)) // filter station with the extra service
+          val gasList = gasStationsWithExtraService.flatMap(_.serviceData.gasList) // get all gas type
+          val gasPrices = gasList.groupBy(_._1).view.mapValues(_.map(_._2)) // group by type
+          val avgPrices = gasPrices.mapValues(prices => prices.flatMap(GasPrice.unapply).foldLeft(0.0)(_ + _) / prices.length.toDouble) // calcul price for each type
+          val avgPrice = avgPrices.values.sum / avgPrices.size // calcul average price
+          ZIO.succeed((extraService, avgPrice))
+        }
+        .run(ZSink.collectAll)
+      averagePricesSorted = averagePrices.sortBy(-_._2) // sort by number
+      _ <- ZIO.foreach(averagePricesSorted) { case (service, price) =>
+        printLine(s"Extra Service: $service => Average Price: $price")
+      }
+      _ <- printLine(" \n ")
+    } yield ()
+  }
+
 }
