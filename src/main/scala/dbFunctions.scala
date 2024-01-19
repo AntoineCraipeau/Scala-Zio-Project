@@ -107,7 +107,7 @@ def selectAvgPricesByCode(dbConnection: Connection, code: Int, zoneType: String,
     val resultSet = preparedStatement.executeQuery()
 
     if (resultSet.next()) {
-      Some(resultSet.getInt("price")).map(_.toDouble)
+      Some(resultSet.getDouble("price"))
     } else {
       None
     }

@@ -16,7 +16,7 @@ object Main extends ZIOAppDefault {
   private val password = ""
 
   val dbConnection: Connection = DriverManager.getConnection(dbUrl, user, password)
-  
+
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
 
@@ -28,12 +28,13 @@ object Main extends ZIOAppDefault {
       _ <- createTableIfNotExists_AverageNumberOfExtraServices(dbConnection)
       _ <- createTableIfNotExists_AverageGasPriceForExtraServices(dbConnection)
 
-      _ <- printLine("Welcome to Gas Station Streams !")
+      _ <- printLine("\n\nWelcome to Gas Station Streams !")
       _ <- printMenu
     } yield ()
 
   def printMenu: ZIO[Any, Any, Unit] =
     for {
+      _ <- printLine("\n\n")
       _ <- printLine("1. If you want a list of all departments and regions")
       _ <- printLine("2. Number of gas stations in chosen department or region")
       _ <- printLine("3. Average price of gas in chosen department or region")

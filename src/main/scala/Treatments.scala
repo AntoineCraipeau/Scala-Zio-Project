@@ -12,71 +12,57 @@ object Treatments{
   //Calculate the number of gas stations in a department
   def departmentCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
     for {
-      _ <- printLine(s"\nEnter the department you want (code) :")
+      _ <- printLine(s"Enter the department you want (code) :")
       departmentCodeStr <- readLine.orDie
       departmentName <- ZIO.fromOption(Department.getNameByCode(departmentCodeStr)).orElseFail("Invalid department code")
       departmentCode <- ZIO.fromTry(Try(departmentCodeStr.toInt)).orElseFail("Invalid department code: Not a number")
-      dbResultOption <- selectStationsByCode(dbConnection, departmentCode, "DPT")
-      count <- dbResultOption match {
-        case Some(dbResult) =>
-          val dbCount = dbResult.toDouble
-          printLine(s"Data found in DB: Number of stations in $departmentName: ${dbCount.toInt}\n").as(dbCount) *> {
-            if (value != "2") {
-              averagePrice(dbConnection, false, departmentCodeStr, departmentName, dbCount).as(dbCount)
-            } else {
-              ZIO.succeed(dbCount)
-            }
+      count <- countDepartmentStream(departmentCode.toString, mute = true)
+      _ <- value match
+        case "2" => for {
+          dbResultOption <- selectStationsByCode(dbConnection, departmentCode, "DPT")
+          _ <- dbResultOption match {
+            case Some(dbResult) =>
+              val dbCount = dbResult.toDouble
+              printLine(s"Data found in DB: Number of stations in $departmentName: ${dbCount.toInt}\n").as(dbCount)
+            case None =>
+              insertIntoGasStationsByRegDept(dbConnection, count.toInt, departmentCode, "DPT")
           }
-        case None =>
-          countDepartmentStream(departmentCode.toString)
-            .flatMap { count =>
-              val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, departmentCode, "DPT")
-              insertEffect *> (if (value == "2") {
-                printLine("Treatment done.\n").as(count)
-              } else {
-                averagePrice(dbConnection,false , departmentCodeStr, departmentName, count).as(count)
-              })
-            }
-      }
+        } yield ()
+        case _ => for {
+          _ <- averagePrice(dbConnection, false, departmentCodeStr, departmentName, count)
+        } yield ()
     } yield count
   }
 
   //Calculate the number of gas stations in a region
   def regionCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
     for {
-      _ <- printLine(s"\nEnter the region you want (code) :")
+      _ <- printLine(s"Enter the region you want (code) :")
       regionCodeStr <- readLine.orDie
       regionName <- ZIO.fromOption(Region.getNameByCode(regionCodeStr)).orElseFail("Invalid region code")
       regionCode <- ZIO.fromTry(Try(regionCodeStr.toInt)).orElseFail("Invalid region code: Not a number")
-      dbResultOption <- selectStationsByCode(dbConnection, regionCode, "REG")
-      count <- dbResultOption match {
-        case Some(dbResult) =>
-          val dbCount = dbResult.toDouble
-          printLine(s"Data found in DB: Number of stations in $regionName: ${dbCount.toInt}\n").as(dbCount) *> {
-            if (value != "2") {
-              averagePrice(dbConnection, true, regionCodeStr, regionName, dbCount).as(dbCount)
-            } else {
-              ZIO.succeed(dbCount)
-            }
+      count <- countRegionStream(regionCode.toString, mute = true)
+      _ <- value match
+        case "2" => for {
+          dbResultOption <- selectStationsByCode(dbConnection, regionCode, "REG")
+          _ <- dbResultOption match {
+            case Some(dbResult) =>
+              val dbCount = dbResult.toDouble
+              printLine(s"Data found in DB: Number of stations in $regionName: ${dbCount.toInt}\n").as(dbCount)
+            case None =>
+              insertIntoGasStationsByRegDept(dbConnection, count.toInt, regionCode, "REG")
           }
-        case None =>
-          countRegionStream(regionCode.toString)
-            .flatMap { count =>
-              val insertEffect = insertIntoGasStationsByRegDept(dbConnection, count.toInt, regionCode, "REG")
-              insertEffect *> (if (value == "2") {
-                printLine("Treatment done.\n").as(count)
-              } else {
-                averagePrice(dbConnection, true, regionCodeStr, regionName, count).as(count)
-              })
-            }
-      }
+        } yield ()
+        case _ => for {
+          _ <- averagePrice(dbConnection, true, regionCodeStr, regionName, count)
+        } yield ()
     } yield count
   }
 
   //Calculate the average price of a gas type in a region or department
   def averagePrice(dbConnection: Connection, region: Boolean, code: String, name: String, count: Double): ZIO[Any, Any, Unit] = {
     for{
-      _ <- printLine(s"\nEnter the type of gas (GAZOL, E10, SP98, DIESEL, etc.) :")
+      _ <- printLine(s"Enter the type of gas (GAZOL, E10, SP98, DIESEL, etc.) :")
       gasTypeStr <- readLine.orDie
       gasTypeOpt = GasType.fromString(gasTypeStr)
       gasType    <- ZIO.fromOption(gasTypeOpt).orElseFail("Invalid GasType")
