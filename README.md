@@ -40,7 +40,7 @@ Statistiques sur les différents éléments d'une station-service :
 
 ## Schéma de la Base de données 
 
-![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/81164857/69a46063-36ff-4fd7-8682-541ca967a74b)
+![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/78279804/cd03e4b5-1077-4c5a-8db9-c344d058cfa8)
 
 
 ## Schéma Fonctionelle 
