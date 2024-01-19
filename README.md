@@ -26,6 +26,11 @@ Statistiques sur les différents éléments d'une station-service :
 - **Architecture Modulaire et Évolutivité** : Nous avons conçu le projet de manière modulaire, permettant l'ajout aisé de nouvelles fonctionnalités ou le remplacement de composants existants sans perturber le flux global.
 
 
+## Schéma de la Base de données 
+
+![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/81164857/69a46063-36ff-4fd7-8682-541ca967a74b)
+
+
 ## Schéma Fonctionelle 
 
 ![image](https://github.com/AntoineCraipeau/Scala-Zio-Project/assets/81164857/88bbc42e-ab33-44eb-bfae-de2f554f7892)
