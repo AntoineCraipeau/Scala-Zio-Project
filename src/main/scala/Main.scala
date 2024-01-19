@@ -1,27 +1,22 @@
-import Main.dbConnection
 import zio.*
 import com.github.tototoshi.csv.*
-import zio.stream.ZSink
 import Treatments.*
 import SubMenu.*
-import zio.stream.ZStream
 import zio.Console.{printLine, *}
 
-import java.sql.{Connection, DriverManager, SQLException}
+import java.sql.{Connection, DriverManager}
 
 implicit object CustomFormat extends DefaultCSVFormat {
   override val delimiter = ';'
 }
 object Main extends ZIOAppDefault {
 
-  val dbUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
-  val user = "sa"
-  val password = ""
+  private val dbUrl = "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1"
+  private val user = "sa"
+  private val password = ""
 
-  val dbConnection = DriverManager.getConnection(dbUrl, user, password)
-
-
-
+  val dbConnection: Connection = DriverManager.getConnection(dbUrl, user, password)
+  
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Unit] =
     for {
 
@@ -52,7 +47,7 @@ object Main extends ZIOAppDefault {
       _ <- processChoice(choice)
     } yield ()
 
-  def processChoice(choice: String): ZIO[Any, Any, Unit] =
+  private def processChoice(choice: String): ZIO[Any, Any, Unit] =
     choice match {
       case "1" =>
         printRegionsAndDepartments() *> printMenu
@@ -71,7 +66,7 @@ object Main extends ZIOAppDefault {
       case "8" =>
         calculateAveragePriceForExtraServices(dbConnection) *> printMenu
       case "q" =>
-        printLine("Exiting...") *> ZIO.unit
+        printLine("Exiting...").unit
       case _ =>
         printLine("Invalid choice. Please enter a valid option.") *> printMenu
     }

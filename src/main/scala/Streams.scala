@@ -1,13 +1,8 @@
-import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.printLine
 import zio.ZIO
 import zio.stream.{ZSink, ZStream}
 
 object Streams{
-
-  implicit object CustomFormat extends DefaultCSVFormat {
-    override val delimiter = ';'
-  }
 
   def averagePriceDepartmentStream(code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Double] = {
     for{
