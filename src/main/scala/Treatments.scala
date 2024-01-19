@@ -135,13 +135,10 @@ object Treatments{
     } yield sum
   }
 
-  def calculateMostExpensiveGas(dbConnection: Connection): ZIO[Any, Any, Unit] = {
+  def calculateMostExpensiveGasA(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
-      gasStations <- loadGasStationCsv().runCollect
-      gasList = gasStations.flatMap(_.serviceData.gasList)
-      gasPrices = gasList.groupBy(_._1).view.mapValues(_.map(_._2))
-      avgPrices = gasPrices.mapValues(prices => prices.flatMap(GasPrice.unapply).foldLeft(0.0)(_ + _) / prices.length.toDouble)
-      mostExpensiveGas = avgPrices.maxByOption(_._2)
+      mostExpensiveGases <- calculateMostExpensiveGasStream()
+      mostExpensiveGas = mostExpensiveGases.headOption
       _ <- mostExpensiveGas match {
         case Some((gasName, price)) =>
           for {
@@ -157,6 +154,29 @@ object Treatments{
           } yield ()
         case None =>
           printLine("Issue: no gas types found.")
+      }
+    } yield ()
+  }
+  // Same but we check the database first -> calculateMostExpensiveGasB
+  def calculateMostExpensiveGas(dbConnection: Connection): ZIO[Any, Any, Unit] = {
+    for {
+      existingRecord <- selectMostExpensiveGas(dbConnection)
+      _ <- existingRecord match {
+        case Some(gasName:String, price:Double) =>
+          printLine(s"Data already exists in DB: The most expensive gas is $gasName with an average price of $price.")
+        case None =>
+          for {
+            mostExpensiveGases <- calculateMostExpensiveGasStream()
+            mostExpensiveGas = mostExpensiveGases.headOption
+            _ <- mostExpensiveGas match {
+              case Some((gasName, price)) =>
+                for {
+                  _ <- insertMostExpensiveGas(dbConnection, gasName.toString, price)
+                } yield ()
+              case None =>
+                printLine("Issue: no gas types found.")
+            }
+          } yield ()
       }
     } yield ()
   }

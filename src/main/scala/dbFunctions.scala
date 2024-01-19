@@ -260,7 +260,7 @@ def createTableIfNotExists_MostExpensiveGasType(dbConnection: Connection): ZIO[A
   }
 }
 
-def selectMostExpensiveGas(dbConnection: Connection): ZIO[Any, Throwable, Option[Double]] = {
+def selectMostExpensiveGas(dbConnection: Connection): ZIO[Any, Throwable, Option[(String,Double)]] = {
   ZIO.attempt {
     val stmt = dbConnection.createStatement()
 
@@ -270,7 +270,7 @@ def selectMostExpensiveGas(dbConnection: Connection): ZIO[Any, Throwable, Option
     val resultSet = preparedStatement.executeQuery()
 
     if (resultSet.next()) {
-      Some(resultSet.getInt("average_price")).map(_.toDouble)
+      Some((resultSet.getString("gas_type"),resultSet.getDouble("average_price")))
     } else {
       None
     }

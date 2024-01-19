@@ -35,6 +35,35 @@ object Streams{
     } yield sum
   }
 
+  def calculateAveragePriceForExtraServicesStream(): ZIO[Any, Any, Seq[(ExtraServices, Double)]] = {
+    for {
+      gasStations <- loadGasStationCsv().runCollect // collect all station
+      extraServices = gasStations.flatMap(_.serviceData.extraService.toList).distinct // get all extra services
+      averagePrices <- ZStream.fromIterable(extraServices)
+        .mapZIOPar(extraServices.size) { extraService =>
+          val gasStationsWithExtraService = gasStations.filter(_.serviceData.extraService.contains(extraService)) // filter station with the extra service
+          val gasList = gasStationsWithExtraService.flatMap(_.serviceData.gasList) // get all gas type
+          val gasPrices = gasList.groupBy(_._1).view.mapValues(_.map(_._2)) // group by type
+          val avgPrices = gasPrices.mapValues(prices => prices.flatMap(GasPrice.unapply).foldLeft(0.0)(_ + _) / prices.length.toDouble) // calcul price for each type
+          val avgPrice = avgPrices.values.sum / avgPrices.size // calcul average price
+          ZIO.succeed((extraService, avgPrice))
+        }
+        .run(ZSink.collectAll)
+      _ <- ZIO.foreachDiscard(averagePrices.sortBy(-_._2))(averagePrice => printLine(s"Extra Service: ${averagePrice._1} => Average Fuel Price: ${averagePrice._2}"))
+    } yield averagePrices
+  }
+
+  def calculateMostExpensiveGasStream(): ZIO[Any, Any, Seq[(GasType, Double)]] = {
+    for {
+      gasStations <- loadGasStationCsv().runCollect // collect all station
+      gasList = gasStations.flatMap(_.serviceData.gasList) // get all gas type
+      gasPrices = gasList.groupBy(_._1).view.mapValues(_.map(_._2)) // group by type
+      avgPrices = gasPrices.mapValues(prices => prices.flatMap(GasPrice.unapply).foldLeft(0.0)(_ + _) / prices.length.toDouble) // calcul average price for each type
+      mostExpensiveGases = avgPrices.toSeq.sortBy(-_._2).take(5) // sort by price and take 5 most expensive
+      _ <- ZIO.foreachDiscard(mostExpensiveGases)(gas => printLine(s"Gas: ${gas._1} => Average Fuel Price: ${gas._2}"))
+    } yield mostExpensiveGases
+  }
+
   def countDepartmentStream(departmentCode: String): ZIO[Any, Any, Double] = {
     for{
       count <- loadGasStationCsv()
@@ -80,24 +109,6 @@ object Streams{
         .take(5)
       _ <- ZIO.foreachDiscard(departmentCount)(department => printLine(s"${department._1.name} with ${department._2} stations"))
     }yield departmentCount
-  }
-
-  def calculateAveragePriceForExtraServicesStream(): ZIO[Any, Any, Seq[(ExtraServices, Double)]] = {
-    for{
-      gasStations <- loadGasStationCsv().runCollect // collect all station
-      extraServices = gasStations.flatMap(_.serviceData.extraService.toList).distinct // get all extra services
-      averagePrices <- ZStream.fromIterable(extraServices)
-        .mapZIOPar(extraServices.size) { extraService =>
-          val gasStationsWithExtraService = gasStations.filter(_.serviceData.extraService.contains(extraService)) // filter station with the extra service
-          val gasList = gasStationsWithExtraService.flatMap(_.serviceData.gasList) // get all gas type
-          val gasPrices = gasList.groupBy(_._1).view.mapValues(_.map(_._2)) // group by type
-          val avgPrices = gasPrices.mapValues(prices => prices.flatMap(GasPrice.unapply).foldLeft(0.0)(_ + _) / prices.length.toDouble) // calcul price for each type
-          val avgPrice = avgPrices.values.sum / avgPrices.size // calcul average price
-          ZIO.succeed((extraService, avgPrice))
-        }
-        .run(ZSink.collectAll)
-      _ <- ZIO.foreachDiscard(averagePrices.sortBy(-_._2))(averagePrice => printLine(s"Extra Service: ${averagePrice._1} => Average Fuel Price: ${averagePrice._2}"))
-    }yield averagePrices
   }
 
 }
