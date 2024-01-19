@@ -1,6 +1,6 @@
 import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.printLine
-import zio.{Chunk, ZIO}
+import zio.ZIO
 import zio.stream.{ZSink, ZStream}
 
 object Streams{
@@ -18,7 +18,7 @@ object Streams{
         .map(GasPrice.unapply)
         .collectSome[Double]
         .run(ZSink.sum)
-      _ <- printLine(s"\nAverage price of ${gasTypeStr} in ${name}: ${sum / count}")
+      _ <- printLine(s"\nAverage price of $gasTypeStr in $name: ${sum / count}")
     }yield sum
   }
 
@@ -33,6 +33,15 @@ object Streams{
         .run(ZSink.sum)
       _ <- printLine(s"\nAverage price of $gasTypeStr in $name is ${sum / count}")
     } yield sum
+  }
+
+  def calculateAverageExtraServicePerStationStream(): ZIO[Any, Any, Double] = {
+    for {
+      gasStations <- loadGasStationCsv().runCollect // collect all station
+      totalExtraServices = gasStations.flatMap(_.serviceData.extraService.toList).size // count number of service
+      averageExtraServices = if (gasStations.nonEmpty) totalExtraServices.toDouble / gasStations.size else 0 // calcul the average
+      _ <- printLine(s"\nThe average number of extra services per station is: $averageExtraServices")
+    } yield averageExtraServices
   }
 
   def calculateAveragePriceForExtraServicesStream(): ZIO[Any, Any, Seq[(ExtraServices, Double)]] = {
@@ -69,7 +78,7 @@ object Streams{
       count <- loadGasStationCsv()
         .filter(_.geographicData.department.code == departmentCode)
         .run(ZSink.count)
-      _ <- printLine(s"\nNumber of gas stations in ${departmentCode}: ${count}")
+      _ <- printLine(s"\nNumber of gas stations in $departmentCode: $count")
     }yield count
   }
 
@@ -78,7 +87,7 @@ object Streams{
       count <- loadGasStationCsv()
         .filter(_.geographicData.region.code == regionCode)
         .run(ZSink.count)
-      _ <- printLine(s"\nNumber of gas stations in ${regionCode}: ${count}")
+      _ <- printLine(s"\nNumber of gas stations in $regionCode: $count")
     }yield count
   }
 

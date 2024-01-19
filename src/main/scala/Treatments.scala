@@ -1,17 +1,11 @@
 import GasType._
-import GasType.*
 import Streams.*
-import com.github.tototoshi.csv.CSVReader
 import com.github.tototoshi.csv.DefaultCSVFormat
 import zio.Console.*
 import zio.ZIO.*
-import zio.stream.*
 import zio._
-import zio.{ZIO, *}
-import zio.Config.Bool
 
 import java.sql.Connection
-import java.sql.Statement
 import scala.util.Try
 
 object Treatments{
@@ -20,6 +14,7 @@ object Treatments{
     override val delimiter = ';'
   }
 
+  //Calculate the number of gas stations in a department
   def departmentCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
     for {
       _ <- printLine(s"\nEnter the department you want (code) :")
@@ -53,7 +48,7 @@ object Treatments{
     } yield count
   }
 
-
+  //Calculate the number of gas stations in a region
   def regionCount(value: String, dbConnection: Connection): ZIO[Any, Any, Double] = {
     for {
       _ <- printLine(s"\nEnter the region you want (code) :")
@@ -87,7 +82,7 @@ object Treatments{
     } yield count
   }
 
-
+  //Calculate the average price of a gas type in a region or department
   def averagePrice(dbConnection: Connection, region: Boolean, code: String, name: String, count: Double): ZIO[Any, Any, Unit] = {
     for{
       _ <- printLine(s"\nEnter the type of gas (GAZOL, E10, SP98, DIESEL, etc.) :")
@@ -99,6 +94,7 @@ object Treatments{
     } yield ()
   }
 
+  //Calculate the average price of a gas type in a region
   def averagePriceRegion(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
     for {
       dbResultOption <- selectAvgPricesByCode(dbConnection, code.toInt, "REG", gasTypeStr)
@@ -117,6 +113,7 @@ object Treatments{
     } yield sum
   }
 
+  //Calculate the average price of a gas type in a department
   def averagePriceDepartment(dbConnection: Connection, code: String, name: String, gasType: GasType, gasTypeStr: String, count: Double): ZIO[Any, Any, Unit] = {
     for {
       dbResultOption <- selectAvgPricesByCode(dbConnection, code.toInt, "DPT", gasTypeStr)
@@ -135,29 +132,7 @@ object Treatments{
     } yield sum
   }
 
-  def calculateMostExpensiveGasA(dbConnection: Connection): ZIO[Any, Any, Unit] = {
-    for {
-      mostExpensiveGases <- calculateMostExpensiveGasStream()
-      mostExpensiveGas = mostExpensiveGases.headOption
-      _ <- mostExpensiveGas match {
-        case Some((gasName, price)) =>
-          for {
-            existingRecord <- selectMostExpensiveGas(dbConnection)
-            _ <- existingRecord match {
-              case Some(_) =>
-                printLine(s"Data already exists in DB: The most expensive gas is $gasName with an average price of $price.")
-              case None =>
-                for {
-                  _ <- insertMostExpensiveGas(dbConnection, gasName.toString, price)
-                } yield ()
-            }
-          } yield ()
-        case None =>
-          printLine("Issue: no gas types found.")
-      }
-    } yield ()
-  }
-  // Same but we check the database first -> calculateMostExpensiveGasB
+  //Find the type of gas with the highest average price
   def calculateMostExpensiveGas(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
       existingRecord <- selectMostExpensiveGas(dbConnection)
@@ -181,22 +156,18 @@ object Treatments{
     } yield ()
   }
 
-
-
+  //Find the 5 most recurring extra services in gas stations
   def calculateMostPresentExtraService(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
       _ <- printLine("The 5 most present services in gas stations: ")
       existingServices <- selectMostPresentServices(dbConnection)
       _ <- existingServices match {
-        case services if services.isEmpty =>
+        case services if services.isEmpty => //No data in DB
           for {
             extraServicesCount <- findMostPresentExtraServiceStream()
             _ <- insertMostPresentServices(dbConnection, extraServicesCount)
-            _ <- ZIO.foreachDiscard(extraServicesCount) { case (service, count) =>
-              printLine(s"Extra Service: $service, Count: $count")
-            }
           } yield ()
-        case services =>
+        case services => //Data found in DB
           ZIO.foreach(services) { case (service, count) =>
             printLine(s"From DB: Extra Service: $service, Count: $count")
           }
@@ -204,7 +175,7 @@ object Treatments{
     } yield ()
   }
 
-  //Same but we check the database first
+  //Find the department with the most gas stations
   def findDepartmentWithMostGasStations(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
       existingRecord <- selectDptMostGasStations(dbConnection)
@@ -230,22 +201,39 @@ object Treatments{
     } yield ()
   }
 
-  def calculateAverageExtraServicesPerStation(): ZIO[Any, Any, Unit] = {
+  //Calculate the average number of extra services per station
+  def calculateAverageExtraServicesPerStation(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
-      gasStations <- loadGasStationCsv().runCollect // collect all station
-      totalExtraServices = gasStations.flatMap(_.serviceData.extraService.toList).size // count number of service
-      averageExtraServices = if (gasStations.nonEmpty) totalExtraServices.toDouble / gasStations.size else 0 // calcul the average
-      _ <- printLine(s"The average number of extra services per station is: $averageExtraServices")
-      _ <- printLine(" \n ")
+      existingRecord <- selectAverageNumberOfExtraServices(dbConnection)
+      _ <- existingRecord match {
+        case Some(avg:Double) =>
+          printLine(s"Data already exists in DB: The average number of extra services per station is: $avg")
+        case None =>
+          for {
+            averageExtraServices <- calculateAverageExtraServicePerStationStream()
+            _ <- insertAverageNumberOfExtraServices(dbConnection, averageExtraServices)
+          } yield ()
+      }
     } yield ()
   }
 
   //Calculate the AVERAGE price of all gas types combined in stations where specific extra services are available using mapPar to perform the operation for each extra service in parallel
   //Then sort and print the results in descending order
-  def calculateAveragePriceForExtraServices(): ZIO[Any, Any, Unit] = {
+  def calculateAveragePriceForExtraServices(dbConnection: Connection): ZIO[Any, Any, Unit] = {
     for {
-      _ <- calculateAveragePriceForExtraServicesStream()
-      _ <- printLine(" \n ")
+      existingRecords <- selectAverageGasPriceForExtraServices(dbConnection)
+      _ <- existingRecords match {
+        case existingRecords if existingRecords.nonEmpty =>
+          ZIO.foreach(existingRecords.sortBy(-_._2)) { case (service, avg) =>
+            printLine(s"From DB: Extra Service: $service, Average Price: $avg")
+          }
+        case _ =>
+          for {
+            pricesForServices <- calculateAveragePriceForExtraServicesStream()
+            _ <- insertAverageGasPriceForExtraServices(dbConnection, pricesForServices.sortBy(-_._2))
+          } yield ()
+      }
+
     } yield ()
   }
 

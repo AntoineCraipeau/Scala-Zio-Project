@@ -30,6 +30,8 @@ object Main extends ZIOAppDefault {
       _ <- createTableIfNotExists_MostPresentGasStationServices(dbConnection)
       _ <- createTableIfNotExists_DptMostGasStations(dbConnection)
       _ <- createTableIfNotExists_MostExpensiveGasType(dbConnection)
+      _ <- createTableIfNotExists_AverageNumberOfExtraServices(dbConnection)
+      _ <- createTableIfNotExists_AverageGasPriceForExtraServices(dbConnection)
 
       _ <- printLine("Welcome to Gas Station Streams !")
       _ <- printMenu
@@ -65,9 +67,9 @@ object Main extends ZIOAppDefault {
       case "6" =>
         calculateMostExpensiveGas(dbConnection) *> printMenu
       case "7" =>
-        calculateAverageExtraServicesPerStation() *> printMenu
+        calculateAverageExtraServicesPerStation(dbConnection) *> printMenu
       case "8" =>
-        calculateAveragePriceForExtraServices() *> printMenu
+        calculateAveragePriceForExtraServices(dbConnection) *> printMenu
       case "q" =>
         printLine("Exiting...") *> ZIO.unit
       case _ =>

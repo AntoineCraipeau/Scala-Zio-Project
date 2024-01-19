@@ -1,13 +1,7 @@
-import java.io.FileInputStream
-import java.sql.{Connection, DriverManager, SQLException}
+import java.sql.Connection
 import scala.collection.mutable.ListBuffer
-import zio.*
 import zio._
-import java.sql.Connection
-import java.sql.Statement
 
-import zio._
-import java.sql.Connection
 
 def createTableIfNotExists_GasStationsByRegDept(dbConnection: Connection): ZIO[Any, Throwable, Unit] = {
   val createTableStatement =
@@ -73,11 +67,11 @@ def createTableIfNotExists_AvgGasPricesByRegDept(dbConnection: Connection): ZIO[
   type VARCHAR(3) CHECK (type IN ('DPT', 'REG'))
   );""".stripMargin
 
-ZIO.scoped {
-  ZIO.acquireRelease(ZIO.attempt(dbConnection.createStatement()))(stmt => ZIO.attempt(stmt.close()).orDie).flatMap { stmt =>
-    ZIO.attemptBlocking {
-      stmt.execute(createTableStatement)
-      println("Table AvgGasPricesByRegDept created successfully")
+  ZIO.scoped {
+    ZIO.acquireRelease(ZIO.attempt(dbConnection.createStatement()))(stmt => ZIO.attempt(stmt.close()).orDie).flatMap { stmt =>
+      ZIO.attemptBlocking {
+        stmt.execute(createTableStatement)
+        println("Table AvgGasPricesByRegDept created successfully")
       }
     }
   }
@@ -205,7 +199,7 @@ def createTableIfNotExists_DptMostGasStations(dbConnection: Connection): ZIO[Any
     ZIO.acquireRelease(ZIO.attempt(dbConnection.createStatement()))(stmt => ZIO.attempt(stmt.close()).orDie).flatMap { stmt =>
       ZIO.attemptBlocking {
         stmt.execute(createTableStatement)
-        println("Table MostPresentGasStationServices created successfully")
+        println("Table DptMostGasStations created successfully")
       }
     }
   }
@@ -254,7 +248,7 @@ def createTableIfNotExists_MostExpensiveGasType(dbConnection: Connection): ZIO[A
     ZIO.acquireRelease(ZIO.attempt(dbConnection.createStatement()))(stmt => ZIO.attempt(stmt.close()).orDie).flatMap { stmt =>
       ZIO.attemptBlocking {
         stmt.execute(createTableStatement)
-        println("Table MostPresentGasStationServices created successfully")
+        println("Table MostExpensiveGasType created successfully")
       }
     }
   }
@@ -289,5 +283,105 @@ def insertMostExpensiveGas(dbConnection: Connection, gasType: String, averagePri
         println(s"Inserted gas station record: gasType=$gasType, averagePrice=$averagePrice")
       }
     }
+  }
+}
+
+def createTableIfNotExists_AverageNumberOfExtraServices(dbConnection: Connection): ZIO[Any, Any, Unit] = {
+  val createTableStatement =
+    """CREATE TABLE IF NOT EXISTS AverageNumberOfExtraServices (
+    average_number_of_extra_services DOUBLE
+    );""".stripMargin
+
+  ZIO.scoped {
+    ZIO.acquireRelease(ZIO.attempt(dbConnection.createStatement()))(stmt => ZIO.attempt(stmt.close()).orDie).flatMap { stmt =>
+      ZIO.attemptBlocking {
+        stmt.execute(createTableStatement)
+        println("Table AverageNumberOfExtraServices created successfully")
+      }
+    }
+  }
+}
+
+def selectAverageNumberOfExtraServices(dbConnection: Connection): ZIO[Any, Throwable, Option[Double]] = {
+  ZIO.attempt {
+    val stmt = dbConnection.createStatement()
+
+    val sql = "SELECT * FROM AverageNumberOfExtraServices"
+    val preparedStatement = dbConnection.prepareStatement(sql)
+
+    val resultSet = preparedStatement.executeQuery()
+
+    if (resultSet.next()) {
+      Some(resultSet.getDouble("average_number_of_extra_services"))
+    } else {
+      None
+    }
+  }
+}
+
+def insertAverageNumberOfExtraServices(dbConnection: Connection, averageNumberOfExtraServices: Double): ZIO[Any, Throwable, Unit] = {
+  val insertStatement =
+    s"""INSERT INTO PUBLIC.AverageNumberOfExtraServices (average_number_of_extra_services)
+        VALUES ($averageNumberOfExtraServices);"""
+
+  ZIO.scoped {
+    ZIO.acquireRelease(ZIO.attempt(dbConnection.createStatement()))(stmt => ZIO.attempt(stmt.close()).orDie).flatMap { stmt =>
+      ZIO.attemptBlocking {
+        stmt.executeUpdate(insertStatement)
+        println(s"Inserted gas station record: averageNumberOfExtraServices=$averageNumberOfExtraServices")
+      }
+    }
+  }
+}
+
+
+def createTableIfNotExists_AverageGasPriceForExtraServices(dbConnection: Connection): ZIO[Any, Any, Unit] = {
+  val createTableStatement =
+    """CREATE TABLE IF NOT EXISTS AverageGasPriceForExtraServices (
+    ID INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    service VARCHAR(255),
+    average_price DOUBLE
+    );""".stripMargin
+
+  ZIO.scoped {
+    ZIO.acquireRelease(ZIO.attempt(dbConnection.createStatement()))(stmt => ZIO.attempt(stmt.close()).orDie).flatMap { stmt =>
+      ZIO.attemptBlocking {
+        stmt.execute(createTableStatement)
+        println("Table AverageGasPriceForExtraServices created successfully")
+      }
+    }
+  }
+}
+
+def selectAverageGasPriceForExtraServices(dbConnection: Connection): ZIO[Any, Throwable, List[(String,Double)]] = {
+  ZIO.attempt {
+    val stmt = dbConnection.createStatement()
+
+    val sql = "SELECT * FROM AverageGasPriceForExtraServices"
+    val preparedStatement = dbConnection.prepareStatement(sql)
+
+    val resultSet = preparedStatement.executeQuery()
+    val buffer = scala.collection.mutable.ListBuffer.empty[(String, Double)]
+    while (resultSet.next()) {
+      val service = resultSet.getString("service")
+      val averagePrice = resultSet.getDouble("average_price")
+      buffer += (service -> averagePrice)
+    }
+    buffer.toList
+  }
+}
+
+def insertAverageGasPriceForExtraServices(dbConnection: Connection, services: Seq[(ExtraServices, Double)]): ZIO[Any, Throwable, Unit] = {
+  val insertStatement = "INSERT INTO AverageGasPriceForExtraServices (service, average_price) VALUES (?, ?)"
+
+  ZIO.attemptBlocking {
+    val preparedStatement = dbConnection.prepareStatement(insertStatement)
+    services.foreach { case (service, averagePrice) =>
+      preparedStatement.setString(1, service.toString)
+      preparedStatement.setDouble(2, averagePrice)
+      preparedStatement.addBatch()
+    }
+    preparedStatement.executeBatch()
+    preparedStatement.close()
   }
 }

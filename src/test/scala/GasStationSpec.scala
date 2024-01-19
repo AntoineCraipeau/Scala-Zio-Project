@@ -1,5 +1,4 @@
 import zio.test.*
-import Treatments.*
 import Streams.*
 import Main.*
 
@@ -166,7 +165,7 @@ object GasStationSpec extends ZIOSpecDefault {
           test("calculateAverageExtraServicesPerStation prints the correct result") {
             val expectedOutput = "The average number of extra services per station is: 6.335167033406681"
             val test = for {
-              _ <- Treatments.calculateAverageExtraServicesPerStation()
+              _ <- Streams.calculateAverageExtraServicePerStationStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
@@ -174,16 +173,16 @@ object GasStationSpec extends ZIOSpecDefault {
           test("calculateAveragePriceForExtraServicesWithZStream prints the correct result") {
             val expectedOutput = "Extra Service: Showers => Average Fuel Price: 1.6540907280468928"
             val test = for {
-              _ <- Treatments.calculateAveragePriceForExtraServices()
+              _ <- Streams.calculateAveragePriceForExtraServicesStream()
               output <- TestConsole.output
             } yield assertTrue(output.exists(_.contains(expectedOutput)))
             test
           },
           test("calculateAveragePriceForExtraServicesWithZStream gets same number of results when called twice") {
             val test = for {
-              _ <- Treatments.calculateAveragePriceForExtraServices()
+              _ <- Streams.calculateAveragePriceForExtraServicesStream()
               output <- TestConsole.output
-              _ <- Treatments.calculateAveragePriceForExtraServices()
+              _ <- Streams.calculateAveragePriceForExtraServicesStream()
               output2 <- TestConsole.output
             } yield assertTrue(output.size == output2.size/2)
             test
