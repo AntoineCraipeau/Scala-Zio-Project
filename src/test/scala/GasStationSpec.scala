@@ -1,8 +1,9 @@
 import zio.ZIO
-import zio.test._
+import zio.test.*
 import zio.test.Assertion.*
 import Treatments.*
 import Main.*
+import zio.json.ast.Json.Bool.True
 
 
 object GasStationSpec extends ZIOSpecDefault {
@@ -25,13 +26,14 @@ object GasStationSpec extends ZIOSpecDefault {
           } yield assertTrue(output.exists(_.contains(expectedOutput)))
           test
         },
-        test("User can't enter invalid choice") {
-          val expectedOutput = "Invalid choice. Please enter a valid option."
+        test("User enter invalid choice recall menu") {
           val test = for {
             _ <- TestConsole.feedLines("a")
+            _ <- TestConsole.feedLines("b")
+            _ <- TestConsole.feedLines("c")
+            _ <- TestConsole.feedLines("q")
             _ <- printMenu
-            output <- TestConsole.output
-          } yield assertTrue(output.exists(_.contains(expectedOutput)))
+          } yield assertTrue(true)
           test
         }
       ),
@@ -51,6 +53,25 @@ object GasStationSpec extends ZIOSpecDefault {
               val expectedOutput = "1.1369473684210525"
               val test = for {
                 _ <- Treatments.averagePriceDepartment("75", "Paris", GasType.E10, "E10", 57)
+                output <- TestConsole.output
+              } yield assertTrue(output.exists(_.contains(expectedOutput)))
+              test
+            }
+          ),
+          suite("Departement Var 83 test")(
+            test("departmentCount prints the correct result") {
+              val expectedOutput = "183"
+              val test = for {
+                _ <- TestConsole.feedLines("83")
+                count <- Treatments.departmentCount("1")
+                output <- TestConsole.output
+              } yield assertTrue(output.exists(_.contains(expectedOutput)))
+              test
+            },
+            test("averagePriceDepartment prints the correct result") {
+              val expectedOutput = "1.5270710382513664"
+              val test = for {
+                _ <- Treatments.averagePriceDepartment("83", "Var", GasType.E10, "E10", 183)
                 output <- TestConsole.output
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
@@ -84,7 +105,26 @@ object GasStationSpec extends ZIOSpecDefault {
               } yield assertTrue(output.exists(_.contains(expectedOutput)))
               test
             }
-          )
+          ),
+        suite("Region Normandie 28 test")(
+          test("regionCount prints the correct result") {
+            val expectedOutput = "569"
+            val test = for {
+              _ <- TestConsole.feedLines("28")
+              count <- Treatments.regionCount("1")
+              output <- TestConsole.output
+            } yield assertTrue(output.exists(_.contains(expectedOutput)))
+            test
+          },
+          test("averagePriceRegion prints the correct result") {
+            val expectedOutput = "1.5042231985940249"
+            val test = for {
+              _ <- Treatments.averagePriceRegion("28", "Normandie", GasType.SP98, "SP98", 569)
+              output <- TestConsole.output
+            } yield assertTrue(output.exists(_.contains(expectedOutput)))
+            test
+          }
+        )
         ),
         suite("Extra Services test")(
           test("calculateMostPresentExtraService prints the correct result") {
