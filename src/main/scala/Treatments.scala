@@ -11,21 +11,6 @@ object Treatments{
     override val delimiter = ';'
   }
 
-  def regionOrDepartment(value: String): ZIO[Any, Any, Unit] = {
-    for {
-      _ <- printLine("Do you want to search by region or department ? (region/department)")
-      choice <- readLine.orDie
-      region <- choice match {
-        case "region" => ZIO.succeed(true)
-        case "department" => ZIO.succeed(false)
-        case _ => 
-          printLine("Invalid choice. Please enter a valid option.") 
-          regionOrDepartment(value)
-      }
-      _ <- if (region == true) regionCount(value) else departmentCount(value)
-    } yield ()
-  }
-
   def departmentCount(value: String): ZIO[Any, Any, Double] = {
     for {
       _ <- printLine(s"\nEnter the department you want (code) :")
@@ -168,7 +153,7 @@ object Treatments{
         .run(ZSink.collectAll)
       averagePricesSorted = averagePrices.sortBy(-_._2) // sort by number
       _ <- ZIO.foreach(averagePricesSorted) { case (service, price) =>
-        printLine(s"Extra Service: $service, Average Price: $price")
+        printLine(s"Extra Service: $service => Average Price: $price")
       }
       _ <- printLine(" \n ")
     } yield ()

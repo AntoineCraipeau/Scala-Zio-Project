@@ -2,6 +2,7 @@ import zio.*
 import com.github.tototoshi.csv.*
 import zio.stream.ZSink
 import Treatments.*
+import SubMenu.*
 import zio.stream.ZStream
 import zio.Console.*
 
@@ -17,12 +18,14 @@ object Main extends ZIOAppDefault {
 
   def printMenu: ZIO[Any, Any, Unit] =
     for {
-      _ <- printLine("1. Number of gas stations in chosen department or region")
-      _ <- printLine("2. Average price of gas in chosen department or region")
-      _ <- printLine("3. Most present extra services in gas stations")
-      _ <- printLine("4. Department with the most gas stations")
-      _ <- printLine("5. Most expensive gas type")
-      _ <- printLine("6. Average prices in gas stations with extra services")
+      _ <- printLine("1. If you want a list of all departments and regions")
+      _ <- printLine("2. Number of gas stations in chosen department or region")
+      _ <- printLine("3. Average price of gas in chosen department or region")
+      _ <- printLine("4. Most present extra services in gas stations")
+      _ <- printLine("5. Department with the most gas stations")
+      _ <- printLine("6. Most expensive gas type")
+      _ <- printLine("7. Average number of extra services per station")
+      _ <- printLine("8. Average price of gas for specific extra services")
       _ <- printLine("Please enter your choice (or 'q' to quit):")
       choice <- readLine.orDie
       _ <- processChoice(choice)
@@ -31,16 +34,20 @@ object Main extends ZIOAppDefault {
   def processChoice(choice: String): ZIO[Any, Any, Unit] =
     choice match {
       case "1" =>
-        regionOrDepartment(choice) *> printMenu
+        printRegionsAndDepartments() *> printMenu
       case "2" =>
         regionOrDepartment(choice) *> printMenu
       case "3" =>
-        calculateMostPresentExtraService() *> printMenu
+        regionOrDepartment(choice) *> printMenu
       case "4" =>
-        findDepartmentWithMostGasStations() *> printMenu
+        calculateMostPresentExtraService() *> printMenu
       case "5" =>
-        calculateMostExpensiveGas() *> printMenu
+        findDepartmentWithMostGasStations() *> printMenu
       case "6" =>
+        calculateMostExpensiveGas() *> printMenu
+      case "7" =>
+        calculateAverageExtraServicesPerStation() *> printMenu
+      case "8" =>
         calculateAveragePriceForExtraServicesWithZStream() *> printMenu
       case "q" =>
         printLine("Exiting...") *> ZIO.unit
